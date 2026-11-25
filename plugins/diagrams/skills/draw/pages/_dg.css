@@ -8,8 +8,19 @@
 :root[data-theme="dark"] .dg > svg.dg-l{display:none} :root[data-theme="dark"] .dg > svg.dg-d{display:block}
 .dg-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch; background:var(--dg-ground)}
 .dg-scroll:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
-.dg .edge,.dg .edge-label,.dg .node{transition:opacity .25s}
-.dg.focus .edge:not(.on),.dg.focus .edge-label:not(.on),.dg.focus .node:not(.on){opacity:.13}
+.dg .edge,.dg :is(.node,.edge-label) :is(rect,path,circle,ellipse,line,polyline,polygon,image,use){transition:opacity .25s}
+/* Focus: lines and box shapes fade; their words stay readable. A faded box or label keeps full opacity (even a
+   planned box drawn at .78) and its shapes fade one by one, while its text takes the twin's ink (--dg-ink, set on
+   each twin by page.js): the colour the look already keeps readable on its ground, zones and plates, so it holds
+   4.5:1 whatever the faded box had under it. */
+.dg.focus .edge:not(.on){opacity:.15}
+.dg.focus .node:not(.on),.dg.focus .edge-label:not(.on){opacity:1}
+.dg.focus :is(.node,.edge-label):not(.on) :is(rect,path,circle,ellipse,line,polyline,polygon,image,use){opacity:.15}
+.dg.focus :is(.node,.edge-label):not(.on) :is(text,tspan):not(.badge *){fill:var(--dg-ink,currentColor)}
+/* text drawn inside a logo (the k8s "api" mark) is part of the logo: it fades with it */
+.dg.focus .node:not(.on) .badge text{opacity:.15}
+/* a line label's plate (its first rect) stays, so faded words still sit on a clear patch over any line */
+.dg.focus .edge-label:not(.on) > rect:first-child{opacity:1}
 /* the theme toggle every page carries */
 .dg-theme{display:inline-flex; border:1px solid var(--rule); border-radius:6px; overflow:hidden; font:600 13px/1 var(--body); vertical-align:middle}
 .dg-theme button{all:unset; cursor:pointer; padding:7px 10px; color:var(--muted)}

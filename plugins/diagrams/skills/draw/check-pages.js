@@ -4,6 +4,8 @@
 //   a .dg box without exactly two top-level twins, or any <svg> nested inside a diagram (page code must be able
 //   to select the diagrams alone); a badge outside its .node; a theme toggle that does not swap page and drawing
 //   together, or that redraws (the twins must be the same elements, unchanged); Auto not following the device;
+//   layout A not showing the whole drawing at load (no scroll, also with step 1 in the reading band); faded text
+//   (a box or label not lit) under 4.5:1 on what is under it, in either theme;
 //   more than two font families loaded, or IBM Plex Sans missing on a Clear page; an accent colour with a hue in
 //   150-260 or 15-40 (design-with-mobbin), in either theme; sideways page scroll at phone width (390 px).
 //   node check-pages.js [OUTDIR]      every layout x every offered look on incident-response, and the six layouts on
@@ -76,6 +78,32 @@ const hue = css => {
           };
         });
         const fail = m => errs.push(`${where}: ${m}`);
+        // Complete at rest (layout A): at load, with no scroll, nothing in the drawing is faded below how it is drawn.
+        const atRest = () => p.evaluate(() => {
+          const dg = document.querySelector('.dg');
+          const faded = [...dg.querySelectorAll('.node,.edge-label')].filter(e => +getComputedStyle(e).opacity < +(e.getAttribute('opacity') || 1) - 1e-3
+            || [...e.querySelectorAll('*')].some(c => +getComputedStyle(c).opacity < +(c.getAttribute('opacity') || 1) - 1e-3));
+          return { faded: faded.length, focus: dg.classList.contains('focus'), lit: document.querySelectorAll('.step.on').length, y: scrollY,
+            first: (document.querySelector('.step') || { getBoundingClientRect: () => ({ top: 0 }) }).getBoundingClientRect().top };
+        });
+        if (L.id === 'A') {
+          const restFail = (r, why) => { if (r.faded || r.focus || r.lit) fail(`${why}, no scroll: ${r.faded} boxes or labels faded, ${r.lit} steps lit (the whole drawing must show at rest)`); };
+          const r0 = await atRest(); restFail(r0, 'at load');
+          // Again with the window sized so the first step card sits in the reading band at load.
+          await p.setViewportSize({ width: 1440, height: Math.round(r0.first / .66) });
+          await p.reload(); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(400);
+          restFail(await atRest(), 'at load with step 1 in the reading band');
+          // ...and scrolling still drives it: step 2's card in the band lights step 2; back at the top the drawing is whole.
+          await p.setViewportSize({ width: 1440, height: 900 }); await p.waitForTimeout(100);
+          await p.evaluate(() => { const r = document.querySelectorAll('.step')[1].getBoundingClientRect(); scrollBy(0, r.top + r.height / 2 - innerHeight * .66); });
+          await p.waitForTimeout(400);
+          const lit = await p.evaluate(() => ({ on: [...document.querySelectorAll('.step.on')].map(s => s.dataset.i).join(), focus: document.querySelector('.dg').classList.contains('focus') }));
+          if (lit.on !== '1' || !lit.focus) fail(`scrolling step 2's card into the reading band lit steps [${lit.on}] (focus ${lit.focus}), not step 2`);
+          await p.evaluate(() => scrollTo(0, 0)); await p.waitForTimeout(400);
+          restFail(await atRest(), 'scrolled back to the top');
+          await p.setViewportSize({ width: 1440, height: 900 }); await p.reload(); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(150);
+          await p.evaluate(() => { window.__twins = [...document.querySelectorAll('.dg > svg')]; });
+        }
         if (pe.length) fail('page errors: ' + pe.slice(0, 3).join(' | '));
         if (static_.left) fail(`placeholder ${static_.left} left in the page`);
         if (static_.twins.some(t => t !== 2)) fail(`a .dg box without exactly two twins: ${static_.twins}`);
@@ -100,6 +128,68 @@ const hue = css => {
         await p.click('.dg-theme button[data-t="light"]'); await check('dg-l', 'toggle back to Light');
         await p.click('.dg-theme button[data-t="auto"]'); await check('dg-l', 'Auto on a light device');
         await p.emulateMedia({ colorScheme: 'dark' }); await check('dg-d', 'Auto on a dark device');
+        // Focus keeps words readable: light one box, then every faded box or label's text keeps 4.5:1 on what is
+        // actually under it (the shapes under three points across the text, composited over the drawing's ground).
+        await p.setViewportSize({ width: 1440, height: 3000 }); await p.waitForTimeout(100);
+        for (const t of ['light', 'dark']) {
+          await p.click(`.dg-theme button[data-t="${t}"]`);
+          await p.evaluate(() => { const dg = [...document.querySelectorAll('.dg')].find(d => !d.closest('[data-locator]')); const n = dg.querySelector('.node[data-id]'); window.__lit = dg; DG.light(dg, { nodes: [n.dataset.id] }); });
+          await p.waitForTimeout(400);
+          const res = await p.evaluate(() => {
+            const rgb = c => { c = (c || '').trim(); if (c[0] === '#') { if (c.length === 4) c = '#' + [...c.slice(1)].map(x => x + x).join(''); return [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)); } const m = c.match(/[\d.]+/g); return m && m.length >= 3 ? m.map(Number).slice(0, 3) : null; };
+            const lum = c => { const m = c.map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); return .2126 * m[0] + .7152 * m[1] + .0722 * m[2]; };
+            const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+            const over = (c, a, under) => c.map((v, i) => v * a + under[i] * (1 - a));
+            const dg = window.__lit, svg = DG.shown(dg), ground = rgb(getComputedStyle(document.documentElement).getPropertyValue('--dg-ground'));
+            const alpha = (el, own) => { let a = own; for (let e = el; e && e !== dg.parentElement; e = e.parentElement) a *= +getComputedStyle(e).opacity; return a; };
+            // The colour under a point: every painted shape there (not text), bottom up, over the ground.
+            const under = (x, y, skip) => {
+              let c = ground;
+              for (const e of document.elementsFromPoint(x, y).reverse()) {
+                if (!svg.contains(e) || e === svg || skip.has(e) || e.closest('text') || !(e instanceof SVGGeometryElement)) continue;
+                const cs = getComputedStyle(e), useFill = cs.fill !== 'none' && !/url\(/.test(cs.fill), paint = useFill ? cs.fill : cs.stroke;
+                const col = rgb(paint); if (!col || /url\(/.test(paint) || paint === 'none') continue;
+                c = over(col, alpha(e, +(useFill ? cs.fillOpacity : cs.strokeOpacity)), c);
+              }
+              return c;
+            };
+            const texts = [...svg.querySelectorAll(':is(.node,.edge-label):not(.on) text')].filter(t => t.textContent.trim() && !t.closest('.badge'));
+            const skip = new Set(texts);
+            const out = [], seen = new Set(), sb = dg.closest('.dg-scroll'), left0 = sb ? sb.scrollLeft : 0;
+            // A drawing wider than its box scrolls sideways: measure each stretch in turn.
+            for (let pass = 0; pass < 20; pass++) {
+              const clip = (sb || dg).getBoundingClientRect();
+              texts.forEach(t => {
+                if (seen.has(t)) return;
+                const r = t.getBoundingClientRect(), y = r.top + r.height / 2; let worst = 99;
+                const cs = getComputedStyle(t), f = rgb(cs.fill); if (!f) return;
+                const a = alpha(t, +cs.fillOpacity);
+                for (const fx of [.25, .5, .75]) {
+                  const x = r.left + r.width * fx;
+                  if (x < clip.left || x > clip.right || y < 0 || y > innerHeight) continue;
+                  const u = under(x, y, skip); worst = Math.min(worst, ratio(over(f, a, u), u));
+                }
+                if (worst === 99) return; seen.add(t);
+                if (worst < 4.5) out.push(`"${t.textContent.trim().slice(0, 24)}" ${worst.toFixed(2)}:1`);
+              });
+              if (!sb || sb.scrollLeft + sb.clientWidth >= sb.scrollWidth - 1) break;
+              sb.scrollLeft += sb.clientWidth * .8;
+            }
+            if (sb) sb.scrollLeft = left0;
+            // Texts a crop leaves outside the drawing's view are not on show and need no measuring.
+            const box = svg.getBoundingClientRect(), shown = texts.filter(t => { const r = t.getBoundingClientRect(), x = r.left + r.width / 2 - box.left + (sb ? sb.scrollLeft : 0), y = r.top + r.height / 2; return x >= 0 && x <= box.width && y >= box.top && y <= box.bottom; }).length;
+            const logoText = [...svg.querySelectorAll('.node:not(.on) .badge text')].filter(t => t.textContent.trim() && alpha(t, 1) > .2).length;
+            const plates = [...svg.querySelectorAll('.edge-label:not(.on) > rect:first-child')].filter(r => alpha(r, 1) < .999).length;
+            DG.light(dg);
+            return { out, seen: seen.size, total: shown, plates, logoText };
+          });
+          if (res.out.length) fail(`${t}: ${res.out.length} faded labels under 4.5:1 on what is under them while a box is lit: ${res.out.slice(0, 3).join(', ')}`);
+          if (res.logoText) fail(`${t}: ${res.logoText} words drawn inside a faded box's logo stay at full strength (they must fade with the logo)`);
+          if (res.plates) fail(`${t}: ${res.plates} faded line labels lost their plate (it must stay so the words sit on a clear patch)`);
+          if (res.seen < res.total) fail(`${t}: only ${res.seen} of the ${res.total} faded labels on show could be measured`);
+        }
+        await p.setViewportSize({ width: 1440, height: 900 }); await p.waitForTimeout(100);
+        await p.click('.dg-theme button[data-t="auto"]');
         const same = await p.evaluate(() => { const now = [...document.querySelectorAll('.dg > svg')]; return now.length === window.__twins.length && now.every((s, i) => s === window.__twins[i]); });
         if (!same) fail('the twins were replaced during theme changes (a theme change must not redraw)');
         if (look === 'clear') {

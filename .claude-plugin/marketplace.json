@@ -11,7 +11,7 @@
       "name": "diagrams",
       "source": "./plugins/diagrams",
       "description": "Architecture diagrams for cloud-native and infrastructure work: Kubernetes, CNCF projects, Proxmox and on-prem, drawn in one clear standard with real logos. Other looks (Sketch, Blueprint, Isometric, Dark, Infographic) are one request away.",
-      "version": "1.7.2",
+      "version": "1.7.3",
       "category": "design"
     }
   ]

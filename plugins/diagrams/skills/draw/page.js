@@ -73,7 +73,7 @@ async function drawer(src) {
         // the drawing's own faces (text inside badge art, such as the k8s "api" mark, falls back and does not count)
         const fams = [...new Set([...c.querySelectorAll('text')].filter(t => !t.closest('.badge')).map(t => (t.getAttribute('font-family') || '').split(',')[0].replace(/['"]/g, '').trim()).filter(Boolean))];
         return {
-          svg: new XMLSerializer().serializeToString(c), w: +svg.dataset.w, h: +svg.dataset.h, bg: S.bg, fams,
+          svg: new XMLSerializer().serializeToString(c), w: +svg.dataset.w, h: +svg.dataset.h, bg: S.bg, ink: S.ink, fams,
           style: { name: cur.name, font: S.font, subFont: S.subFont || S.font, steps: !!(S.edge && S.edge.steps) },
           flows: DiagramModel.flowHues(S.bg), model: MODEL,
           overflow: [...svg.querySelectorAll('text[data-overflow]')].map(t => t.textContent),
@@ -91,18 +91,18 @@ async function drawer(src) {
 }
 
 // One twin, ready to inline: no width/height (CSS sizes it), every id prefixed so two twins (and two figures) never clash.
-function prep(svg, prefix, cls) {
+function prep(svg, prefix, cls, ink) {
   svg = svg.replace(/<svg\b([^>]*?)\swidth="[\d.]+"/, '<svg$1').replace(/<svg\b([^>]*?)\sheight="[\d.]+"/, '<svg$1');
   svg = svg.replace(/(\s)id="([^"]+)"/g, (m, s, id) => `${s}id="${prefix}${id}"`)
     .replace(/aria-labelledby="([^"]+)"/g, (m, ids) => `aria-labelledby="${ids.split(/\s+/).map(x => prefix + x).join(' ')}"`)
     .replace(/url\(#([^)]+)\)/g, (m, id) => `url(#${prefix}${id})`)
     .replace(/href="#([^"]+)"/g, (m, id) => `href="#${prefix}${id}"`);
-  return svg.replace('<svg ', `<svg class="${cls}" `);
+  return svg.replace('<svg ', `<svg class="${cls}"${ink ? ` style="--dg-ink:${ink}"` : ''} `);
 }
 
 function figure(tw, name, title) {
   const W = tw.light.w, H = tw.light.h;
-  let l = prep(tw.light.svg, `${name}-l-`, 'dg-l'), d = prep(tw.dark.svg, `${name}-d-`, 'dg-d');
+  let l = prep(tw.light.svg, `${name}-l-`, 'dg-l', tw.light.ink), d = prep(tw.dark.svg, `${name}-d-`, 'dg-d', tw.dark.ink);
   if (title) l = l.replace(/(<title[^>]*>)[^<]*/, (m, a) => a + esc(title)), d = d.replace(/(<title[^>]*>)[^<]*/, (m, a) => a + esc(title));
   return `<div class="dg" data-dg="${name}" data-w="${W}" data-h="${H}" style="--dw:${W};--dh:${H}">${l}${d}</div>`;
 }

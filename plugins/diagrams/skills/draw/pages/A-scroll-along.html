@@ -7,7 +7,8 @@
 <style>
 /* Layout A, Scroll-along (Explainer). The answer first, then the drawing held at the top of the screen,
    as wide as the window allows and never under 85% of its drawn size, with numbered steps scrolling under it.
-   Each step lights up its part of the drawing; its number is the number on the drawing.
+   Each step lights up its part of the drawing while its card is in the reading band; at rest (page load,
+   or no card in the band) the whole drawing shows. Its number is the number on the drawing.
    After: a news article's headline and standfirst, figure wider than the text. */
 /*FONTS*/
 @theme light { --bg:#fbfafb; --paper:#ffffff; --ink:#1f1a1e; --muted:#5d5360; --rule:#e4dde2; --accent:#6d2e5f; }
@@ -83,15 +84,20 @@ code{font:.85em var(--mono)}
       if (next && narrow.matches) { document.querySelector('.stage').scrollIntoView({ block: 'start' }); const s = PAGE.steps[+next.dataset.i]; if (s.nodes && s.nodes.length) DG.reveal(dg, box, s.nodes[s.nodes.length - 1]); } });
     st.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); st.click(); } });
   });
-  if ('IntersectionObserver' in window && !narrow.matches) {
-    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) show(e.target); }), { rootMargin: '-62% 0px -30% 0px' });
-    steps.forEach(s => io.observe(s));
-    new IntersectionObserver(es => { if (es[0].isIntersecting) show(null); }).observe(document.querySelector('header.top'));
-  }
+  // Complete at rest: the whole drawing shows at load and whenever no card is in the reading band (62-70% down
+  // the window). A card lights its part only once the reader has scrolled and the card is in that band.
+  let inBand;
+  const band = () => {
+    if (narrow.matches) return;
+    const h = innerHeight, st = scrollY > 0 ? steps.find(s => { const r = s.getBoundingClientRect(); return r.top < h * .7 && r.bottom > h * .62; }) || null : null;
+    if (st !== inBand) { inBand = st; show(st); }
+  };
+  let queued = false;
+  addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; band(); }); } }, { passive: true });
   // A drawing taller than about two thirds of the window stays in the flow instead of covering the steps.
   const stage = document.querySelector('.stage'), fitStage = () => { stage.style.position = ''; if (stage.offsetHeight > innerHeight * .66) stage.style.position = 'static'; };
-  addEventListener('resize', fitStage); fitStage();
-  show(null);
+  addEventListener('resize', () => { fitStage(); band(); }); fitStage();
+  show(null); inBand = null;
 })();
 </script>
 </body>
