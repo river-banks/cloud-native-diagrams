@@ -1,0 +1,89 @@
+{
+  "order": 50,
+  "id": "swiss",
+  "name": "Transit",
+  "offered": false,
+  "after": "a transit-map explainer style",
+  "blurb": "Black and white with one signal yellow, heavy Overpass type, square boxes, and the main path drawn thick.",
+  "good": "Diagrams that sit inside our transit explainer pages, or anywhere the main path must jump out.",
+  "source": "a transit-map explainer style.",
+  "swatch": "#ffcd00",
+  "rules": [
+    "Colour comes only from the logos and the yellow",
+    "Zones are grey blocks under a black rule",
+    "The main path is thick with a yellow underlay",
+    "Square corners, no shadows"
+  ],
+  "bg": "#ffffff",
+  "font": "Overpass",
+  "subFont": "Overpass",
+  "ink": "#111111",
+  "sub": "#454545",
+  "pal": {
+    "violet": {},
+    "blue": {},
+    "amber": {},
+    "green": {},
+    "red": {}
+  },
+  "zone": {
+    "mode": "rule",
+    "r": 0,
+    "sw": 0,
+    "size": 15.5
+  },
+  "node": {
+    "fill": "#ffffff",
+    "stroke": "#111111",
+    "sw": 1.5,
+    "r": 0,
+    "size": 14,
+    "subSize": 12.5,
+    "badge": "tile",
+    "bs": 34,
+    "weight": 800,
+    "tileR": 3,
+    "glyphTile": {
+      "bg": "#111111",
+      "fg": "#ffcd00"
+    }
+  },
+  "edge": {
+    "c": "#111111",
+    "sw": 1.6,
+    "head": "solid",
+    "r": 0,
+    "hot": {
+      "c": "#111111",
+      "sw": 3,
+      "under": "#ffcd00",
+      "usw": 10
+    }
+  },
+  "title": {
+    "mode": "band",
+    "size": 30,
+    "weight": 800
+  },
+  "dark": {
+    "bg": "#111111",
+    "ink": "#f2f2f2",
+    "sub": "#b5b5b5",
+    "card": "#1c1c1c",
+    "rule": "#f2f2f2",
+    "zone": {
+      "fill": "#1c1c1c"
+    },
+    "node": {
+      "fill": "#111111",
+      "stroke": "#f2f2f2",
+      "glyphTile": {
+        "bg": "#ffcd00",
+        "fg": "#111111"
+      }
+    },
+    "edge": {
+      "c": "#f2f2f2"
+    }
+  }
+}

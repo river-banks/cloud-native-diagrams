@@ -1,0 +1,18 @@
+{
+  "name": "cloud-native-diagrams",
+  "owner": {
+    "name": "river-banks"
+  },
+  "metadata": {
+    "description": "Diagrams for cloud-native and infrastructure operations."
+  },
+  "plugins": [
+    {
+      "name": "diagrams",
+      "source": "./plugins/diagrams",
+      "description": "Architecture diagrams for cloud-native and infrastructure work: Kubernetes, CNCF projects, Proxmox and on-prem, drawn in one clear standard with real logos. Other looks (Sketch, Blueprint, Isometric, Dark, Infographic) are one request away.",
+      "version": "1.7.2",
+      "category": "design"
+    }
+  ]
+}

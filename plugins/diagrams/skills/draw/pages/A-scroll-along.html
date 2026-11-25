@@ -1,0 +1,98 @@
+<!doctype html>
+<!--LANG-->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><!--TITLE--></title>
+<style>
+/* Layout A, Scroll-along (Explainer). The answer first, then the drawing held at the top of the screen,
+   as wide as the window allows and never under 85% of its drawn size, with numbered steps scrolling under it.
+   Each step lights up its part of the drawing; its number is the number on the drawing.
+   After: a news article's headline and standfirst, figure wider than the text. */
+/*FONTS*/
+@theme light { --bg:#fbfafb; --paper:#ffffff; --ink:#1f1a1e; --muted:#5d5360; --rule:#e4dde2; --accent:#6d2e5f; }
+@theme dark { --bg:#17141a; --paper:#1d1a20; --ink:#ece6ea; --muted:#a99fa7; --rule:#3a3239; --accent:#dba8cf; }
+/*DGCSS*/
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg); color:var(--ink); font:18px/1.6 var(--body)}
+a{color:var(--accent)}
+.wrap{max-width:1600px; margin:0 auto; padding-inline:max(16px, env(safe-area-inset-left,0px))}
+.bar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding-block:18px 0; font:600 14px/1.3 var(--head); color:var(--muted)}
+header.top{max-width:68ch; padding-block:24px 8px}
+h1{font:800 clamp(30px,4.2vw,48px)/1.08 var(--head); letter-spacing:-.01em; margin:0 0 18px; text-wrap:balance}
+.answer{font-size:21px; line-height:1.5; margin:0 0 10px}
+.meta{font:14px/1.4 var(--head); color:var(--muted); margin:12px 0 0}
+.stage{position:sticky; top:0; z-index:2; background:var(--dg-ground); padding-block:10px 8px; border-block:1px solid var(--rule)}
+.status{font:600 14px/1.3 var(--head); color:var(--muted); margin:6px 0 0; min-height:1.3em; background:var(--bg); padding:6px 0}
+.status b{color:var(--ink)}
+.steps{max-width:68ch; margin:0 auto; padding:40px 16px 30vh; display:grid; gap:18px}
+.step{display:grid; grid-template-columns:44px 1fr; gap:14px; padding:18px 20px; border-radius:6px; border:1px solid transparent; cursor:pointer}
+.step .n{font:800 16px/1 var(--head); width:32px; height:32px; border-radius:50%; display:grid; place-items:center; border:2px solid var(--muted); color:var(--muted)}
+.step h2{font:700 18px/1.3 var(--head); margin:4px 0 6px}
+.step p{margin:0}
+.step.on{background:var(--paper); border-color:var(--rule)}
+.step.on .n{border-color:var(--accent); background:var(--accent); color:var(--paper)}
+.step:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+code{font:.85em var(--mono)}
+.more{max-width:68ch; margin:0 auto; padding:0 16px 80px}
+.more h2{font:800 26px/1.2 var(--head); margin:40px 0 12px}
+.cap{font:14px/1.45 var(--head); color:var(--muted)}
+@media (max-width:760px){ .stage{position:static} .steps{padding-block:24px 40px} body{font-size:17px} .answer{font-size:19px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar"><span><!--CRUMB--></span><!--TOGGLE--></div>
+  <header class="top">
+    <h1><!--TITLE--></h1>
+    <p class="answer"><!--ANSWER--></p>
+    <p class="meta" id="key"></p>
+  </header>
+</div>
+<section class="stage" aria-label="Diagram">
+  <div class="wrap">
+    <div class="dg-scroll" tabindex="0" aria-label="Diagram, scrolls sideways on small screens"><!--FIG:main--></div>
+    <p class="status" id="status" aria-live="polite"></p>
+  </div>
+</section>
+<main class="steps" id="steps"></main>
+<div class="more" id="more"><p class="cap"><!--CAPTION--> <!--META--></p></div>
+<script>
+/*DGJS*/
+(function () {
+  const dg = document.querySelector('.dg'), status = document.getElementById('status'), host = document.getElementById('steps');
+  const ALL = 'Showing the whole drawing. Pick or scroll to a step to follow it.';
+  const theme = () => document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const keyLine = () => { const F = MODEL.flows || {}, hex = PAGE.flowHex[theme()];
+    document.getElementById('key').innerHTML = Object.entries(F).filter(([k]) => MODEL.edges.some(e => e.f === k)).map(([k, f]) => `<span class="sw" style="--c:${hex[f.c]}"></span>${DG.esc(f.t)}`).join(' &nbsp; '); };
+  keyLine(); document.addEventListener('dg-theme', keyLine); matchMedia('(prefers-color-scheme: dark)').addEventListener('change', keyLine);
+  host.innerHTML = PAGE.steps.map((s, i) => `<div class="step" tabindex="0" data-i="${i}"><span class="n">${DG.esc(s.n)}</span><div><h2>${DG.md(s.h)}</h2><p>${DG.md(s.p)}</p></div></div>`).join('');
+  (PAGE.more || []).forEach(m => document.getElementById('more').insertAdjacentHTML('beforebegin', `<section class="more"><h2>${DG.md(m.h)}</h2>${[].concat(m.p).map(p => `<p>${DG.md(p)}</p>`).join('')}</section>`));
+  const steps = [...host.children];
+  function show(st) {
+    steps.forEach(s => s.classList.toggle('on', s === st));
+    if (!st) { DG.light(dg); status.textContent = ALL; return; }
+    const s = PAGE.steps[+st.dataset.i];
+    DG.light(dg, { edges: s.edges || [], nodes: s.nodes || [] });
+    status.innerHTML = `<b>${PAGE.numbering === 'steps' ? 'Step' : 'Part'} ${DG.esc(s.n)} of ${PAGE.steps.length}:</b> ${DG.md(s.h)}`;
+  }
+  const narrow = matchMedia('(max-width:760px)'), box = document.querySelector('.dg-scroll');
+  steps.forEach(st => {
+    st.addEventListener('click', () => { const next = st.classList.contains('on') ? null : st; show(next);
+      if (next && narrow.matches) { document.querySelector('.stage').scrollIntoView({ block: 'start' }); const s = PAGE.steps[+next.dataset.i]; if (s.nodes && s.nodes.length) DG.reveal(dg, box, s.nodes[s.nodes.length - 1]); } });
+    st.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); st.click(); } });
+  });
+  if ('IntersectionObserver' in window && !narrow.matches) {
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) show(e.target); }), { rootMargin: '-62% 0px -30% 0px' });
+    steps.forEach(s => io.observe(s));
+    new IntersectionObserver(es => { if (es[0].isIntersecting) show(null); }).observe(document.querySelector('header.top'));
+  }
+  // A drawing taller than about two thirds of the window stays in the flow instead of covering the steps.
+  const stage = document.querySelector('.stage'), fitStage = () => { stage.style.position = ''; if (stage.offsetHeight > innerHeight * .66) stage.style.position = 'static'; };
+  addEventListener('resize', fitStage); fitStage();
+  show(null);
+})();
+</script>
+</body>
+</html>

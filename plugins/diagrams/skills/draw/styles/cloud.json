@@ -1,0 +1,95 @@
+{
+  "order": 20,
+  "id": "cloud",
+  "name": "Cloud reference",
+  "offered": false,
+  "after": "AWS reference architectures",
+  "blurb": "Official service tiles with no boxes round them, thin coloured group outlines with a corner tab, and numbered steps on the arrows.",
+  "good": "Architecture decision records, vendor reviews, anything an AWS, Azure or GCP reader will check against the real console.",
+  "source": "the AWS Architecture Center diagrams and the AWS Architecture Icons kit (groups as outlines, numbered steps).",
+  "swatch": "#ed7100",
+  "rules": [
+    "Official service icons only, never redrawn",
+    "Groups are outlines, not fills",
+    "Black numbered circles tell the order",
+    "Name above role, no brackets"
+  ],
+  "bg": "#ffffff",
+  "font": "IBM Plex Sans",
+  "subFont": "IBM Plex Sans",
+  "ink": "#16191f",
+  "sub": "#545b64",
+  "pal": {
+    "violet": {
+      "stroke": "#8c4fff"
+    },
+    "blue": {
+      "stroke": "#147eba"
+    },
+    "amber": {
+      "stroke": "#ed7100"
+    },
+    "green": {
+      "stroke": "#7aa116"
+    },
+    "red": {
+      "stroke": "#dd344c"
+    }
+  },
+  "zone": {
+    "mode": "outline",
+    "r": 0,
+    "sw": 1.4,
+    "size": 14
+  },
+  "node": {
+    "fill": "none",
+    "stroke": "none",
+    "sw": 0,
+    "r": 0,
+    "size": 13.5,
+    "subSize": 12,
+    "badge": "tile",
+    "bs": 40,
+    "weight": 600
+  },
+  "edge": {
+    "c": "#16191f",
+    "sw": 1.3,
+    "head": "solid",
+    "r": 0,
+    "steps": 1
+  },
+  "title": {
+    "mode": "left",
+    "size": 26,
+    "weight": 600
+  },
+  "dark": {
+    "bg": "#161e2b",
+    "ink": "#ffffff",
+    "sub": "#c6ccd4",
+    "pal": {
+      "violet": {
+        "stroke": "#b28cff"
+      },
+      "blue": {
+        "stroke": "#4fb3ff"
+      },
+      "amber": {
+        "stroke": "#ff9900"
+      },
+      "green": {
+        "stroke": "#a3d14a"
+      },
+      "red": {
+        "stroke": "#ff6b81"
+      }
+    },
+    "edge": {
+      "c": "#e9edf1",
+      "stepFill": "#ff9900",
+      "stepInk": "#16191f"
+    }
+  }
+}

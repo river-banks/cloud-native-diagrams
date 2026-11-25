@@ -1,0 +1,20 @@
+/* Shared by every page template (page.js inlines it). The page ships two drawings of one model, the light and
+   the dark twin; the theme picks one with CSS alone, so a theme change never redraws. No attribute on <html> is
+   Auto (follows the device); data-theme="light" or "dark" pins it. */
+.dg{position:relative; width:max(100%, calc(var(--dw) * var(--dg-min, .85) * 1px)); max-width:calc(var(--dw) * 1px); margin:0 auto}
+.dg > svg{display:block; width:100%; height:auto}
+.dg > svg.dg-d{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dg > svg.dg-l{display:none} :root:not([data-theme="light"]) .dg > svg.dg-d{display:block}}
+:root[data-theme="dark"] .dg > svg.dg-l{display:none} :root[data-theme="dark"] .dg > svg.dg-d{display:block}
+.dg-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch; background:var(--dg-ground)}
+.dg-scroll:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+.dg .edge,.dg .edge-label,.dg .node{transition:opacity .25s}
+.dg.focus .edge:not(.on),.dg.focus .edge-label:not(.on),.dg.focus .node:not(.on){opacity:.13}
+/* the theme toggle every page carries */
+.dg-theme{display:inline-flex; border:1px solid var(--rule); border-radius:6px; overflow:hidden; font:600 13px/1 var(--body); vertical-align:middle}
+.dg-theme button{all:unset; cursor:pointer; padding:7px 10px; color:var(--muted)}
+.dg-theme button + button{border-left:1px solid var(--rule)}
+.dg-theme button[aria-pressed="true"]{color:var(--ink); box-shadow:inset 0 -3px 0 var(--accent)}
+.dg-theme button:focus-visible{outline:3px solid var(--accent); outline-offset:-3px}
+.sw{display:inline-block; width:20px; height:4px; border-radius:2px; vertical-align:middle; margin-right:8px; background:var(--c)}
+@media (prefers-reduced-motion:reduce){.dg *{transition:none!important}}

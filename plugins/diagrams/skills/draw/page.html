@@ -1,0 +1,196 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagram style picker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/*FONTS*/
+:root {
+  --paper: #ffffff; --floor: #f3f2ee; --ink: #111111; --muted: #555555; --line: #d9d7d0; --accent: #ffcd00; --on-accent: #111111;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper: #141414; --floor: #1d1d1d; --ink: #f2f2f2; --muted: #a8a8a8; --line: #353535; color-scheme: dark; } }
+:root[data-theme="dark"] { --paper: #141414; --floor: #1d1d1d; --ink: #f2f2f2; --muted: #a8a8a8; --line: #353535; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 'Overpass', system-ui, sans-serif; }
+.band { background: #000; color: #fff; padding-block: 14px; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); display: flex; gap: 14px; align-items: center; }
+.band b { background: var(--accent); color: #111; font-weight: 800; padding: 2px 8px; }
+.band span { font-weight: 800; letter-spacing: .02em; }
+main { max-width: 1480px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: clamp(30px, 4vw, 48px); line-height: 1.05; margin: 0 0 10px; font-weight: 800; letter-spacing: -.01em; }
+h2 { font-size: 26px; margin: 48px 0 6px; font-weight: 800; }
+p.lede { max-width: 760px; color: var(--muted); margin: 0 0 24px; font-size: 18px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.tabs button { font: inherit; font-weight: 800; padding: 8px 14px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; border-radius: 0; }
+.tabs button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--ink); }
+.tabs button:focus-visible, .thumb:focus-visible, .chips button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.stage { border: 1px solid var(--line); overflow-x: auto; background: var(--floor); }
+.stage svg { display: block; width: 100%; min-width: 1100px; height: auto; }
+.card { display: grid; grid-template-columns: 1.1fr 1fr 1.2fr; gap: 24px; padding: 20px 0 0; }
+.card h3 { margin: 0; font-size: 28px; font-weight: 800; }
+.card .after { color: var(--muted); margin: 2px 0 8px; }
+.card ul { margin: 0; padding-left: 18px; }
+.card .k { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 4px; }
+.prompt { background: var(--floor); border-left: 6px solid var(--accent); padding: 12px 14px; font: 14px/1.45 ui-monospace, 'IBM Plex Mono', monospace; white-space: pre-wrap; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.thumb { border: 2px solid var(--line); background: var(--paper); padding: 0; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.thumb[aria-pressed="true"] { border-color: var(--ink); }
+.thumb svg { display: block; width: 100%; height: auto; }
+.thumb div { padding: 8px 12px; font-weight: 800; }
+.thumb div small { font-weight: 400; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 16px; }
+.chips button { font: inherit; font-size: 14px; font-weight: 700; padding: 5px 12px; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; }
+.chips button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.chips input { font: inherit; padding: 6px 10px; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink); min-width: 220px; }
+.lib h4 { margin: 20px 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.lib .set { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 8px; }
+.lib figure { margin: 0; border: 1px solid var(--line); padding: 12px 6px 8px; text-align: center; background: var(--paper); }
+.lib figure.ondark { background: #0f2d55; }
+.lib figure.ondark figcaption { color: #dfe9fb; }
+.lib figure svg { width: 44px; height: 44px; display: block; margin: 0 auto 6px; }
+.lib figcaption { font-size: 12.5px; line-height: 1.25; }
+.lib figcaption code { display: block; color: var(--muted); font-size: 11px; }
+.notes { color: var(--muted); font-size: 14px; max-width: 900px; }
+@media (max-width: 900px) { .card { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { main { padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); } .grid { grid-template-columns: 1fr; } .chips input { min-width: 0; width: 100%; } }
+</style>
+<header class="band"><b>Diagrams</b><span>Technical diagrams</span></header>
+<main>
+  <h1>Pick a diagram style</h1>
+  <p class="lede" id="lede">One model, every style in the catalogue. Every product carries its real logo as a badge, from the shared badge library further down. Pick the look that fits the job, then ask for it by name.</p>
+  <div class="tabs" id="examples" role="group" aria-label="Example diagram" hidden></div>
+  <div class="tabs" id="tabs" role="group" aria-label="Diagram style"></div>
+  <div class="chips"><span id="theme" role="group" aria-label="Diagram background" style="display:contents"><button type="button" data-t="light">Light</button><button type="button" data-t="dark">Dark</button></span><span id="views" role="group" aria-label="View" style="display:contents"><button type="button" data-v="map">Map</button><button type="button" data-v="sequence">Sequence</button></span></div>
+  <figure class="stage" style="margin:0" aria-label="Diagram"><svg id="main" role="img" aria-label="Diagram"></svg></figure>
+  <div class="chips" id="save" role="group" aria-label="Download this style"><button type="button" id="dl-svg">Download SVG</button><button type="button" id="dl-png">Download PNG</button></div>
+  <section class="card" id="card" aria-live="polite"></section>
+
+  <h2 id="glance">Every style at a glance</h2>
+  <div class="grid" id="grid"></div>
+
+  <h2 id="library">Badge library</h2>
+  <p class="notes">Logos for the products we draw most. AWS services use the official AWS Architecture Icons, unchanged. Everything else uses the Simple Icons glyph in the brand's own colour. Each style picks one treatment; you can preview them all here.</p>
+  <div class="chips" id="modes" role="group" aria-label="Badge treatment"></div>
+  <div class="chips"><label for="q" class="k" style="font-weight:800">Find</label><input id="q" type="search" placeholder="grafana, lambda, kafka" autocomplete="off"></div>
+  <div class="lib" id="lib"></div>
+
+  <h2>Where the styles come from</h2>
+  <ul class="notes" id="sources"></ul>
+  <p class="notes">To add a style, an example or a badge, see <code>diagrams/README.md</code> in the cloud-native-diagrams repo: one JSON file or one line, then <code>python3 build.py</code>.</p>
+  <p class="notes">Badges: AWS Architecture Icons from the AWS asset package (AWS lets you use them in architecture diagrams). Other logos: Simple Icons glyph data (CC0); each logo is still its owner's trademark, so use it only to name the product. Fonts: Excalifont (OFL), IBM Plex, Archivo, Overpass, Hanken Grotesk, JetBrains Mono (OFL).</p>
+</main>
+<script>/*ROUGH*/</script>
+<script>/*DATA*/</script>
+<script>/*RENDER*/</script>
+<script>
+const B = BADGE_DATA.badges;
+const qs = new URLSearchParams(location.search);
+let cur = STYLES.find(s => s.id === qs.get('style')) || STYLES[0];
+let MODEL = EXAMPLES.find(m => m.id === qs.get('example')) || EXAMPLES[0];
+let mode = cur.node.badge;
+let theme = qs.get('theme') === 'dark' ? 'dark' : 'light';
+let view = qs.get('view') === 'sequence' ? 'sequence' : 'map';
+const hasSteps = m => (m.edges || []).some(e => e.step);
+const noHeader = qs.get('header') === '0';   // export.js --no-header: the page around the diagram owns the title
+const shown = () => { const m = view === 'sequence' && hasSteps(MODEL) ? DiagramModel.sequence(MODEL) : MODEL; return noHeader ? Object.assign({}, m, { header: false }) : m; };
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+if (!qs.get('style') && store.get('diagram-style')) cur = STYLES.find(s => s.id === store.get('diagram-style')) || cur;
+
+const tabs = document.getElementById('tabs');
+STYLES.forEach(s => { const b = document.createElement('button'); b.type = 'button'; b.textContent = s.name; b.dataset.id = s.id; b.onclick = () => pick(s.id); tabs.appendChild(b); });
+const exTabs = document.getElementById('examples');
+if (EXAMPLES.length > 1) {
+  exTabs.hidden = false;
+  EXAMPLES.forEach(m => { const b = document.createElement('button'); b.type = 'button'; b.textContent = m.title; b.dataset.id = m.id; b.onclick = () => { MODEL = m; pick(cur.id); thumbs(); }; exTabs.appendChild(b); });
+}
+if (PREVIEW) { document.querySelector('h1').textContent = `${MODEL.title}: pick a style`; document.title = `${MODEL.title}: pick a style`; }
+document.getElementById('lede').textContent = PREVIEW ? `Your diagram, drawn in all ${STYLES.length} styles from the catalogue. Click a thumbnail to see it large, then tell Claude the style name, or download it here.` : `${EXAMPLES.length > 1 ? `${EXAMPLES.length} example systems` : 'The same system'}, drawn in ${STYLES.length} styles from one model each. Every product carries its real logo as a badge, from the shared badge library further down. Pick the look that fits the job, then ask for it by name.`;
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+document.getElementById('sources').innerHTML = STYLES.map(s => `<li><b>${esc(s.name)}</b>: ${esc(s.source || s.after)}</li>`).join('');
+const grid = document.getElementById('grid');
+STYLES.forEach(s => {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'thumb'; b.dataset.id = s.id;
+  b.innerHTML = `<svg aria-hidden="true"></svg><div>${s.name} <small>after ${s.after}</small></div>`;
+  b.onclick = () => { pick(s.id); document.getElementById('tabs').scrollIntoView({ behavior: 'smooth' }); };
+  grid.appendChild(b);
+});
+function promptFor(s) { if (PREVIEW) return `Use the "${s.name}" style (${s.id}).`; return `Draw a technical diagram of &lt;your system&gt; in the "${s.name}" style from the diagrams skill. Use the badge library for every named product, and keep one model so I can switch styles.`; }
+function pick(id) {
+  cur = STYLES.find(s => s.id === id); store.set('diagram-style', id);
+  document.querySelectorAll('#tabs button, #grid .thumb').forEach(b => b.setAttribute('aria-pressed', b.dataset.id === id));
+  exTabs.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.id === MODEL.id));
+  const svg = document.getElementById('main');
+  drawDiagram(svg, shown(), themeStyle(cur, theme), B);
+  document.querySelectorAll('#theme button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === theme));
+  document.querySelectorAll('#views button').forEach(b => { b.hidden = !hasSteps(MODEL); b.setAttribute('aria-pressed', b.dataset.v === (hasSteps(MODEL) ? view : 'map')); });
+  document.getElementById('card').innerHTML = `
+    <div><h3>${cur.name}</h3><p class="after">After ${cur.after}</p><p style="margin:0">${cur.blurb}</p></div>
+    <div><p class="k">Good for</p><p style="margin:0 0 12px">${cur.good}</p><p class="k">Rules</p><ul>${cur.rules.map(r => `<li>${r}</li>`).join('')}</ul></div>
+    <div><p class="k">Ask for it</p><div class="prompt">${promptFor(cur)}</div></div>`;
+  mode = cur.node.badge; drawModes(); drawLib();
+}
+const MODES = [['native', 'Logo only'], ['tile', 'Tile'], ['disc', 'Disc'], ['chip', 'White chip']];
+function drawModes() {
+  const m = document.getElementById('modes'); m.innerHTML = '';
+  MODES.forEach(([id, t]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.setAttribute('aria-pressed', id === mode); b.onclick = () => { mode = id; drawModes(); drawLib(); }; m.appendChild(b); });
+}
+function badgeSvg(id) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  const S = Object.assign({}, cur, { node: Object.assign({}, cur.node, { badge: mode }) });
+  const mini = { w: 44, h: 44, title: '', kicker: '', zones: [], nodes: [], edges: [], labels: [], panels: [], key: false };
+  // draw just a badge: reuse the renderer by drawing one fake node with no box
+  const paper = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#ffffff';
+  const S2 = Object.assign({}, S, { bg: mode === 'chip' ? '#0f2d55' : 'transparent', contrastBg: mode === 'chip' ? '#0f2d55' : paper, grid: 0, title: { mode: 'none' }, node: Object.assign({}, S.node, { fill: 'none', stroke: 'none', bs: 40, shadow: 0, size: 0.1, subSize: 0.1 }) });
+  mini.nodes = [{ id: 'x', t: '', s: [], b: id, x: 2, y: -8, w: 40, h: 40, lay: 'top' }];
+  drawDiagram(svg, mini, S2, B);
+  return svg;
+}
+function drawLib() {
+  const lib = document.getElementById('lib'); lib.innerHTML = '';
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  Object.entries(BADGE_DATA.groups).forEach(([g, gname]) => {
+    const ids = Object.keys(B).filter(id => B[id].g === g && (!q || id.includes(q) || B[id].n.toLowerCase().includes(q)));
+    if (!ids.length) return;
+    const h = document.createElement('h4'); h.textContent = gname; lib.appendChild(h);
+    const set = document.createElement('div'); set.className = 'set'; lib.appendChild(set);
+    ids.forEach(id => {
+      const f = document.createElement('figure'); if (mode === 'chip') f.className = 'ondark';
+      f.appendChild(badgeSvg(id));
+      const c = document.createElement('figcaption'); c.innerHTML = `${B[id].n}<code>${id}</code>`; f.appendChild(c); set.appendChild(f);
+    });
+  });
+  const gl = Object.keys(GLYPHS).filter(n => !q || n.includes(q) || 'glyph'.includes(q));
+  if (gl.length) {
+    const h = document.createElement('h4'); h.textContent = 'Line glyphs, for things with no brand'; lib.appendChild(h);
+    const set = document.createElement('div'); set.className = 'set'; lib.appendChild(set);
+    gl.forEach(n => {
+      const f = document.createElement('figure'); if (mode === 'chip') f.className = 'ondark';
+      f.appendChild(badgeSvg('g:' + n));
+      const c = document.createElement('figcaption'); c.innerHTML = `${n}<code>g:${n}</code>`; f.appendChild(c); set.appendChild(f);
+    });
+  }
+  if (!lib.children.length) lib.innerHTML = '<p class="notes">No badge matches. Add a line to badges/catalogue.json (Simple Icons, the AWS icon kit, or your own SVG in badges/own/), then run python3 build.py badges.</p>';
+}
+document.getElementById('q').addEventListener('input', drawLib);
+// Export: the SVG carries its own fonts, so it looks the same anywhere it is opened.
+function diagramSVG() {
+  const c = document.getElementById('main').cloneNode(true);
+  c.removeAttribute('id'); c.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); c.setAttribute('width', c.dataset.w); c.setAttribute('height', c.dataset.h);
+  const fams = new Set([...c.querySelectorAll('text')].map(t => t.getAttribute('font-family').split(',')[0].replace(/['"]/g, '').trim()));
+  const css = [...document.styleSheets[0].cssRules].filter(r => r instanceof CSSFontFaceRule && fams.has(r.style.getPropertyValue('font-family').replace(/['"]/g, '').trim())).map(r => r.cssText).join('\n');
+  const st = document.createElementNS('http://www.w3.org/2000/svg', 'style'); st.textContent = css; c.insertBefore(st, c.querySelector('desc').nextSibling);
+  return new XMLSerializer().serializeToString(c);
+}
+function save(blob, ext) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${MODEL.id}${view === 'sequence' && hasSteps(MODEL) ? '-sequence' : ''}-${cur.id}${theme === 'dark' ? '-dark' : ''}.${ext}`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
+document.getElementById('dl-svg').onclick = () => save(new Blob([diagramSVG()], { type: 'image/svg+xml' }), 'svg');
+document.getElementById('dl-png').onclick = () => {
+  const img = new Image();
+  const m = document.getElementById('main'), w = +m.dataset.w, h = +m.dataset.h;
+  img.onload = () => { const k = 2, cv = document.createElement('canvas'); cv.width = w * k; cv.height = h * k; const x = cv.getContext('2d'); x.scale(k, k); x.drawImage(img, 0, 0); cv.toBlob(b => save(b, 'png')); };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(diagramSVG());
+};
+function thumbs() { document.querySelectorAll('#grid .thumb > svg').forEach((svg, i) => drawDiagram(svg, shown(), themeStyle(STYLES[i], theme), B)); }
+document.querySelectorAll('#views button').forEach(b => b.onclick = () => { view = b.dataset.v; pick(cur.id); thumbs(); });
+document.querySelectorAll('#theme button').forEach(b => b.onclick = () => { theme = b.dataset.t; pick(cur.id); thumbs(); });
+document.fonts.ready.then(() => { pick(cur.id); thumbs(); });
+pick(cur.id); thumbs();
+</script>

@@ -1,0 +1,130 @@
+{
+  "order": 10,
+  "id": "sketch",
+  "name": "Sketch",
+  "offered": true,
+  "after": "Excalidraw",
+  "blurb": "Hand-drawn boxes, pastel hatched zones, a handwriting font and full-colour logos.",
+  "good": "Design reviews, blog posts, talks: anything that should feel like a whiteboard and invite comment.",
+  "source": "Excalidraw (excalidraw.com), its Excalifont and the rough.js renderer it is built on.",
+  "swatch": "#f1d892",
+  "rules": [
+    "Excalifont for every word",
+    "Pastel zone per stage, numbered",
+    "Logos in their own colours, no tile",
+    "Short role in brackets under each name"
+  ],
+  "bg": "#fcfcfa",
+  "font": "Excalifont",
+  "subFont": "Excalifont",
+  "ink": "#1e1e1e",
+  "sub": "#1e1e1e",
+  "rough": {
+    "roughness": 1.1,
+    "bowing": 0.8
+  },
+  "pal": {
+    "violet": {
+      "fill": "#f1ebff",
+      "stroke": "#6c4fcf",
+      "hatch": "#d6c8ff"
+    },
+    "blue": {
+      "fill": "#e8f1fd",
+      "stroke": "#2f6fc9",
+      "hatch": "#bfd5f5"
+    },
+    "amber": {
+      "fill": "#fff6dc",
+      "stroke": "#b0820a",
+      "hatch": "#f1d892"
+    },
+    "green": {
+      "fill": "#e9f6eb",
+      "stroke": "#3c8f4b",
+      "hatch": "#bde3c4"
+    },
+    "red": {
+      "fill": "#fdebeb",
+      "stroke": "#c0504f",
+      "hatch": "#f2c2c2"
+    }
+  },
+  "zone": {
+    "mode": "tint",
+    "r": 16,
+    "sw": 1.6,
+    "size": 20,
+    "num": "ring"
+  },
+  "node": {
+    "fill": "#ffffff",
+    "stroke": "#1e1e1e",
+    "sw": 1.3,
+    "r": 12,
+    "size": 15,
+    "subSize": 13,
+    "paren": 1,
+    "badge": "native",
+    "bs": 36,
+    "tone": 1,
+    "hero": {
+      "fill": "#eee8ff",
+      "stroke": "zone"
+    }
+  },
+  "edge": {
+    "c": "#1e1e1e",
+    "sw": 1.6,
+    "head": "open",
+    "r": 14
+  },
+  "title": {
+    "mode": "box",
+    "size": 34
+  },
+  "dark": {
+    "bg": "#121212",
+    "ink": "#e3e3e3",
+    "sub": "#c4c4c4",
+    "card": "#1e1e1e",
+    "pal": {
+      "violet": {
+        "fill": "#241f36",
+        "stroke": "#a993f2",
+        "hatch": "#383057"
+      },
+      "blue": {
+        "fill": "#17222f",
+        "stroke": "#7aa7e8",
+        "hatch": "#26384d"
+      },
+      "amber": {
+        "fill": "#2a2313",
+        "stroke": "#d9b44a",
+        "hatch": "#45391c"
+      },
+      "green": {
+        "fill": "#172a1c",
+        "stroke": "#7cc48a",
+        "hatch": "#28432e"
+      },
+      "red": {
+        "fill": "#2e1a1a",
+        "stroke": "#e58c8b",
+        "hatch": "#4a2828"
+      }
+    },
+    "node": {
+      "fill": "#1e1e1e",
+      "stroke": "#e3e3e3",
+      "hero": {
+        "fill": "#2d2645",
+        "stroke": "zone"
+      }
+    },
+    "edge": {
+      "c": "#e3e3e3"
+    }
+  }
+}

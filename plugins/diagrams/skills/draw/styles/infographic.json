@@ -1,0 +1,113 @@
+{
+  "order": 30,
+  "id": "infographic",
+  "name": "Infographic",
+  "offered": true,
+  "after": "ByteByteGo system-design cards",
+  "blurb": "Bold coloured header bars, round logo discs, chunky dark arrows and heavy type.",
+  "good": "Social posts, onboarding, one-slide summaries: when it must read from across the room.",
+  "source": "ByteByteGo system-design cards (heavy headers, round logos, thick arrows).",
+  "swatch": "#2f9e44",
+  "rules": [
+    "One saturated colour per stage, used on the header bar",
+    "Logos on round discs in their brand colour",
+    "Thick arrows, heavy titles",
+    "No more than about 20 boxes"
+  ],
+  "bg": "#f6f5f1",
+  "font": "Archivo",
+  "subFont": "Archivo",
+  "ink": "#121212",
+  "sub": "#4d4d4d",
+  "pal": {
+    "violet": {
+      "stroke": "#7048e8",
+      "fill": "#f0ebff"
+    },
+    "blue": {
+      "stroke": "#1c7ed6",
+      "fill": "#e7f2fc"
+    },
+    "amber": {
+      "stroke": "#cc6200",
+      "fill": "#fff1db"
+    },
+    "green": {
+      "stroke": "#2f9e44",
+      "fill": "#e6f6e9"
+    },
+    "red": {
+      "stroke": "#e03131",
+      "fill": "#fde8e8"
+    }
+  },
+  "zone": {
+    "mode": "header",
+    "r": 16,
+    "sw": 2,
+    "size": 17,
+    "bar": 42
+  },
+  "node": {
+    "fill": "#ffffff",
+    "stroke": "none",
+    "sw": 0,
+    "r": 12,
+    "size": 14.5,
+    "subSize": 12.5,
+    "badge": "disc",
+    "bs": 38,
+    "weight": 800,
+    "shadow": 1,
+    "tone": 1,
+    "hero": {
+      "fill": "zone"
+    }
+  },
+  "edge": {
+    "c": "#2b2b2b",
+    "sw": 2.6,
+    "head": "solid",
+    "r": 10,
+    "hs": 1.35
+  },
+  "title": {
+    "mode": "left",
+    "size": 32,
+    "weight": 800
+  },
+  "dark": {
+    "bg": "#17171a",
+    "ink": "#f4f4f5",
+    "sub": "#b4b4bb",
+    "card": "#26262b",
+    "pal": {
+      "violet": {
+        "stroke": "#7a5af0",
+        "fill": "#221d33"
+      },
+      "blue": {
+        "stroke": "#2f7fd0",
+        "fill": "#14212f"
+      },
+      "amber": {
+        "stroke": "#c76200",
+        "fill": "#2b2112"
+      },
+      "green": {
+        "stroke": "#2f8f42",
+        "fill": "#15261a"
+      },
+      "red": {
+        "stroke": "#d63030",
+        "fill": "#2d1717"
+      }
+    },
+    "node": {
+      "fill": "#26262b"
+    },
+    "edge": {
+      "c": "#d4d4d8"
+    }
+  }
+}

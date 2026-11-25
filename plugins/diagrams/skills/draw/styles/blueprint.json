@@ -1,0 +1,70 @@
+{
+  "order": 40,
+  "id": "blueprint",
+  "name": "Blueprint",
+  "offered": true,
+  "after": "engineering drawings",
+  "blurb": "Navy paper with a measuring grid, dashed zone outlines, monospace labels and logos on white chips.",
+  "good": "Infrastructure and network detail, runbooks, anything that should feel exact rather than friendly.",
+  "source": "engineering drawings and the C4 model's habit of naming every box with its role.",
+  "swatch": "#0f2d55",
+  "rules": [
+    "Monospace throughout, zone names in capitals",
+    "Zones are dashed and numbered 01, 02",
+    "Logos sit on white chips so brand colours survive the dark",
+    "Thin lines, open arrowheads"
+  ],
+  "bg": "#0f2d55",
+  "grid": 1,
+  "font": "IBM Plex Mono",
+  "subFont": "IBM Plex Mono",
+  "ink": "#eef4ff",
+  "sub": "#a9c2e6",
+  "pal": {
+    "violet": {
+      "stroke": "#c3b4ff"
+    },
+    "blue": {
+      "stroke": "#93c3ff"
+    },
+    "amber": {
+      "stroke": "#ffd47e"
+    },
+    "green": {
+      "stroke": "#93e2ac"
+    },
+    "red": {
+      "stroke": "#ffa3a3"
+    }
+  },
+  "zone": {
+    "mode": "dash",
+    "r": 2,
+    "sw": 1.2,
+    "size": 12.5
+  },
+  "node": {
+    "fill": "#0f2d55",
+    "stroke": "#d6e5ff",
+    "sw": 1,
+    "r": 2,
+    "size": 12.5,
+    "subSize": 11,
+    "badge": "chip",
+    "bs": 34,
+    "weight": 600
+  },
+  "edge": {
+    "c": "#eef4ff",
+    "sw": 1.2,
+    "head": "open",
+    "r": 0
+  },
+  "title": {
+    "mode": "left",
+    "size": 22,
+    "weight": 600,
+    "upper": 1
+  },
+  "dark": {}
+}

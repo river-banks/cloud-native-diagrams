@@ -1,0 +1,119 @@
+{
+  "order": 5,
+  "id": "clear",
+  "name": "Clear",
+  "offered": true,
+  "after": "the Kubernetes docs, C4 and AWS reference diagrams",
+  "blurb": "The house standard. White canvas, grey structure, real logos, and colour only where it means something: one hue per named flow, each in the key and on its line.",
+  "good": "The default for every technical diagram: ADRs, explainers, runbooks, READMEs. Another look only when the user names one.",
+  "source": "the Kubernetes documentation diagram guide, the C4 model notation checklist and AWS reference architectures; colours are Okabe-Ito.",
+  "swatch": "#0072B2",
+  "rules": [
+    "Neutral canvas: page theme never enters the drawing",
+    "Colour means one thing, named in the key",
+    "A real logo on every product",
+    "Port and payload on every line",
+    "Status is a tag, not a colour"
+  ],
+  "bg": "#ffffff",
+  "font": "IBM Plex Sans",
+  "subFont": "IBM Plex Sans",
+  "ink": "#1b1f24",
+  "sub": "#57606a",
+  "pal": {
+    "violet": {
+      "stroke": "#848d97",
+      "fill": "#f6f8fa"
+    },
+    "blue": {
+      "stroke": "#848d97",
+      "fill": "#f6f8fa"
+    },
+    "amber": {
+      "stroke": "#848d97",
+      "fill": "#f6f8fa"
+    },
+    "green": {
+      "stroke": "#848d97",
+      "fill": "#f6f8fa"
+    },
+    "red": {
+      "stroke": "#848d97",
+      "fill": "#f6f8fa"
+    }
+  },
+  "zone": {
+    "mode": "tint",
+    "r": 10,
+    "sw": 1.2,
+    "size": 14
+  },
+  "node": {
+    "fill": "#ffffff",
+    "stroke": "#afb8c1",
+    "sw": 1.2,
+    "r": 8,
+    "size": 14,
+    "subSize": 12,
+    "badge": "tile",
+    "bs": 34,
+    "weight": 600
+  },
+  "edge": {
+    "c": "#57606a",
+    "sw": 1.5,
+    "head": "solid",
+    "r": 6,
+    "steps": 1,
+    "hot": {
+      "c": "#1b1f24",
+      "sw": 3
+    }
+  },
+  "title": {
+    "mode": "left",
+    "size": 26,
+    "weight": 600
+  },
+  "dark": {
+    "bg": "#0d1117",
+    "ink": "#e6edf3",
+    "sub": "#9198a1",
+    "pal": {
+      "violet": {
+        "stroke": "#6e7681",
+        "fill": "#161b22"
+      },
+      "blue": {
+        "stroke": "#6e7681",
+        "fill": "#161b22"
+      },
+      "amber": {
+        "stroke": "#6e7681",
+        "fill": "#161b22"
+      },
+      "green": {
+        "stroke": "#6e7681",
+        "fill": "#161b22"
+      },
+      "red": {
+        "stroke": "#6e7681",
+        "fill": "#161b22"
+      }
+    },
+    "node": {
+      "fill": "#161b22",
+      "stroke": "#3d444d"
+    },
+    "edge": {
+      "c": "#9198a1",
+      "hot": {
+        "c": "#e6edf3",
+        "sw": 3
+      },
+      "stepFill": "#e6edf3",
+      "stepInk": "#0d1117"
+    },
+    "card": "#161b22"
+  }
+}

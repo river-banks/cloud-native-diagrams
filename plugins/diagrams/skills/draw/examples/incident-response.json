@@ -1,0 +1,72 @@
+{
+ "id": "incident-response",
+ "code": "IR",
+ "w": 1940,
+ "h": 870,
+ "title": "AI-powered Kubernetes incident response",
+ "type": "System design",
+ "scope": "Alert to fix, one EKS cluster",
+ "updated": "2026-11-07",
+ "contract": ["What happens between an alert firing and a fix or a page?", "SREs and the platform team", "The alert path, the agent's read-only tools, the policy gate and what gets measured", "Model prompts, network detail, the clusters being watched", "Design reviews and on-call onboarding, laptop or slide"],
+ "kicker": "System design",
+ "zones": [
+  {"id": "z1", "n": 1, "t": "Alert source", "x": 20, "y": 100, "w": 220, "h": 240, "c": "violet"},
+  {"id": "z2", "n": 2, "t": "Alert ingestion", "x": 340, "y": 100, "w": 440, "h": 240, "c": "blue"},
+  {"id": "z3", "n": 3, "t": "Orchestration", "x": 870, "y": 100, "w": 280, "h": 240, "c": "amber"},
+  {"id": "z4", "n": 4, "t": "AI agent (investigation)", "x": 1240, "y": 100, "w": 280, "h": 240, "c": "green"},
+  {"id": "z5", "n": 5, "t": "Investigation tools (read-only)", "x": 220, "y": 400, "w": 670, "h": 260, "c": "blue"},
+  {"id": "z6", "n": 6, "t": "Decision & action", "x": 910, "y": 400, "w": 610, "h": 260, "c": "violet"},
+  {"id": "z7", "t": "Monitoring & evaluation", "x": 20, "y": 720, "w": 1500, "h": 120, "c": "red", "inline": "chart"}
+ ],
+ "nodes": [
+  {"id": "prom", "t": "Prometheus", "s": ["metrics, rules"], "b": "prometheus", "x": 36, "y": 150, "w": 188, "h": 64},
+  {"id": "am", "t": "Alertmanager", "s": ["fires alert"], "x": 36, "y": 256, "w": 188, "h": 60},
+  {"id": "sns", "t": "SNS", "s": ["publish alert"], "b": "sns", "x": 360, "y": 150, "w": 124, "h": 96, "lay": "top"},
+  {"id": "sqs", "t": "SQS", "s": ["queue + retries"], "b": "sqs", "x": 508, "y": 150, "w": 132, "h": 96, "lay": "top"},
+  {"id": "dedupe", "t": "Dedupe", "s": ["one run per", "incident"], "b": "g:filter", "x": 664, "y": 150, "w": 100, "h": 108, "lay": "top"},
+  {"id": "dlq", "t": "DLQ", "s": ["failed messages"], "b": "g:inbox", "x": 490, "y": 274, "w": 168, "h": 56, "ghost": 1},
+  {"id": "lambda", "t": "Lambda", "s": ["validate source", "& environment"], "b": "lambda", "x": 884, "y": 150, "w": 112, "h": 112, "lay": "top"},
+  {"id": "sfn", "t": "Step Functions", "s": ["run agent", "workflow"], "b": "stepfunctions", "x": 1016, "y": 150, "w": 122, "h": 112, "lay": "top"},
+  {"id": "agent", "t": "AI agent", "s": ["Strands", "Agents SDK"], "b": "g:robot", "x": 1256, "y": 150, "w": 116, "h": 112, "lay": "top", "hero": 1},
+  {"id": "kb", "t": "Bedrock KB", "s": ["playbooks", "& examples"], "b": "bedrock", "x": 1400, "y": 150, "w": 108, "h": 112, "lay": "top"},
+  {"id": "gw", "t": "MCP gateway", "s": ["OIDC auth,", "access control"], "b": "modelcontextprotocol", "x": 240, "y": 508, "w": 160, "h": 80},
+  {"id": "eks", "t": "EKS MCP server", "s": ["events, logs, read-only"], "b": "eks", "x": 544, "y": 452, "w": 256, "h": 56},
+  {"id": "graf", "t": "Grafana MCP server", "s": ["metrics, dashboards"], "b": "grafana", "x": 544, "y": 520, "w": 256, "h": 56},
+  {"id": "cw", "t": "CloudWatch MCP server", "s": ["AWS signals"], "b": "cloudwatch", "x": 544, "y": 588, "w": 256, "h": 56},
+  {"id": "policy", "t": "Policy engine", "s": ["rule check, safety", "& guardrails"], "b": "g:policy", "x": 930, "y": 508, "w": 180, "h": 80},
+  {"id": "safe", "t": "Approved safe actions", "s": ["restart pod, rate limited"], "b": "g:gear", "x": 1240, "y": 452, "w": 264, "h": 56, "tone": "green"},
+  {"id": "human", "t": "Human approval", "s": ["Slack / PagerDuty"], "b": "pagerduty", "x": 1240, "y": 520, "w": 264, "h": 56, "tone": "blue"},
+  {"id": "report", "t": "Incident report", "s": ["summary, findings, next steps"], "b": "g:doc", "x": 1240, "y": 588, "w": 264, "h": 56},
+  {"id": "otel", "t": "OpenTelemetry", "s": ["tracing, audit logs, metrics"], "b": "opentelemetry", "x": 500, "y": 740, "w": 300, "h": 80},
+  {"id": "eval", "t": "Evaluation", "s": ["incident replay, diagnosis accuracy,", "pages avoided, MTTR, cost per run"], "b": "g:target", "x": 970, "y": 740, "w": 460, "h": 80}
+ ],
+ "edges": [
+  {"pts": [[130, 214], [130, 256]], "step": 1},
+  {"pts": [[224, 286], [262, 286], [262, 194], [360, 194]], "l": ["HTTPS 443", "alert JSON"]},
+  {"pts": [[484, 194], [508, 194]], "step": 2},
+  {"pts": [[640, 194], [664, 194]]},
+  {"pts": [[574, 246], [574, 274]], "dash": 1},
+  {"pts": [[764, 194], [884, 194]], "step": 3, "l": ["event", "per incident"]},
+  {"pts": [[996, 202], [1016, 202]]},
+  {"pts": [[1138, 202], [1256, 202]], "step": 4, "hot": 1, "l": ["invoke", "alert context"]},
+  {"pts": [[1372, 202], [1400, 202]]},
+  {"pts": [[1314, 262], [1314, 372], [200, 372], [200, 548], [240, 548]], "step": 5, "hot": 1, "l": ["MCP over HTTPS", "read-only tool calls"]},
+  {"pts": [[900, 372], [900, 548], [930, 548]], "hot": 1, "step": 6, "tee": 1},
+  {"pts": [[480, 548], [512, 548], [512, 480], [544, 480]]},
+  {"pts": [[512, 548], [544, 548]], "tee": 1},
+  {"pts": [[512, 548], [512, 616], [544, 616]], "tee": 1},
+  {"pts": [[1110, 548], [1140, 548], [1140, 480], [1240, 480]]},
+  {"pts": [[1140, 548], [1240, 548]], "tee": 1},
+  {"pts": [[1140, 548], [1140, 616], [1240, 616]], "tee": 1},
+  {"pts": [[560, 660], [560, 740]], "dash": 1},
+  {"pts": [[1250, 660], [1250, 740]], "dash": 1},
+  {"pts": [[800, 780], [970, 780]]}
+ ],
+ "labels": [
+  {"t": "traces, tool calls, decisions", "x": 905, "y": 700}
+ ],
+ "panels": [
+  {"id": "guard", "t": "Guardrails", "icon": "shield", "c": "green", "x": 1580, "y": 100, "w": 340, "h": 340, "kind": "check", "items": [["No deleting deployments,", "StatefulSets or secrets"], ["Delete a pod only when", "healthy replicas exist"], ["Approved environments", "and triggers only"], ["Least-privilege RBAC"], ["Rate limits per service"], ["Logs are untrusted input,", "treated as data"]]},
+  {"id": "goals", "t": "Goals (autonomy levels)", "icon": "target", "c": "violet", "x": 1580, "y": 460, "w": 340, "h": 380, "kind": "num", "items": [["Reduce noise", "correlate and suppress", "non-actionable alerts"], ["Reduce MTTR", "automated investigation", "and diagnosis"], ["Auto-resolve simple issues", "controlled remediation", "with guardrails"]]}
+ ]
+}

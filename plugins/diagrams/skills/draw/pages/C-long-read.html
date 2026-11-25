@@ -1,0 +1,92 @@
+<!doctype html>
+<!--LANG-->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><!--TITLE--></title>
+<style>
+/* Layout C, Long read (Blog). A reading column (66ch) with notes in the right margin. Figure 1 breaks out of
+   the column to the full window; a section can add its own figure, the same drawing cropped to the boxes it is
+   about, at full size. Numbered chips in the text light up their step or zone on the drawing.
+   After: long-form news features (figure wider than the text, caption under its left edge). */
+/*FONTS*/
+@theme light { --bg:#fdfcfc; --ink:#201819; --muted:#655a5b; --rule:#e8dfe0; --accent:#8a1c2b; --chip:#1b1f24; --chipink:#ffffff; }
+@theme dark { --bg:#171213; --ink:#efe7e8; --muted:#ab9fa0; --rule:#3b3133; --accent:#f08d9b; --chip:#e6edf3; --chipink:#0d1117; }
+/*DGCSS*/
+*{box-sizing:border-box} html,body{margin:0}
+body{background:var(--bg); color:var(--ink); font:19px/1.65 var(--body)}
+a{color:var(--accent)}
+.g{padding-inline:max(16px, env(safe-area-inset-left,0px))}
+.mast{display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; padding-block:14px; border-bottom:1px solid var(--rule); font:600 15px/1.2 var(--head); color:var(--muted)}
+.col{display:grid; grid-template-columns:minmax(0,1fr) min(66ch,100%) 240px minmax(0,1fr); column-gap:40px}
+.col > *{grid-column:2}
+.col > aside{grid-column:3; font:15px/1.45 var(--head); color:var(--muted); border-top:2px solid var(--ink); padding-top:8px; align-self:start; margin-top:8px}
+header.col{padding-block:56px 10px}
+h1{font:800 clamp(34px,5vw,58px)/1.04 var(--head); letter-spacing:-.015em; margin:0 0 18px; text-wrap:balance}
+.stand{font-size:23px; line-height:1.45; margin:0 0 18px}
+.by{font:14px/1.4 var(--head); color:var(--muted); margin:0}
+h2{font:800 27px/1.2 var(--head); margin:44px 0 6px}
+p{margin:0 0 18px}
+.chip{display:inline-grid; place-items:center; min-width:24px; height:24px; padding:0 4px; border-radius:12px; border:0; background:var(--chip); color:var(--chipink); font:700 13px/1 var(--head); vertical-align:2px; cursor:pointer}
+.chip:hover,.chip:focus-visible,.chip.on{background:var(--accent); color:var(--bg); outline:none}
+code{font:.85em var(--mono)}
+figure{margin:28px 0 30px}
+figure.bleed{grid-column:1 / -1}
+.fig{border-block:1px solid var(--rule)}
+figcaption{max-width:1600px; margin:10px auto 0; font:15px/1.5 var(--head); color:var(--muted)}
+figcaption b{color:var(--accent); font-weight:800}
+.end{border-top:1px solid var(--rule); margin-top:30px; padding-block:22px 80px; font:15px/1.5 var(--head); color:var(--muted)}
+@media (max-width:1100px){ .col{grid-template-columns:minmax(0,1fr) min(66ch,100%) minmax(0,1fr); column-gap:0} .col > aside{grid-column:2; margin:0 0 22px} }
+@media (max-width:600px){ body{font-size:18px} .stand{font-size:20px} }
+</style>
+</head>
+<body>
+<div class="mast g"><span><!--CRUMB--></span><!--TOGGLE--></div>
+<article>
+<header class="col g">
+  <h1><!--TITLE--></h1>
+  <p class="stand"><!--ANSWER--></p>
+  <p class="by"><!--META--></p>
+</header>
+<figure class="bleed g">
+  <div class="fig dg-scroll" tabindex="0" aria-label="Figure 1, scrolls sideways on small screens"><!--FIG:f1--></div>
+  <figcaption><b>Figure 1.</b> <!--CAPTION--></figcaption>
+</figure>
+<div id="body"></div>
+<template id="crop"><!--FIG:f2--></template>
+<div class="col g"><div class="end" id="end">Press a numbered chip in the text to light up that part of figure 1.</div></div>
+</article>
+<script>
+/*DGJS*/
+(function () {
+  const f1 = document.querySelector('[data-dg="f1"]'), body = document.getElementById('body');
+  const items = Object.fromEntries(PAGE.steps.map(s => [s.n, s]));
+  const word = PAGE.numbering === 'steps' ? 'step' : 'part';
+  const chip = n => `<button class="chip" type="button" data-n="${DG.esc(n)}" aria-label="Show ${word} ${DG.esc(n)}">${DG.esc(n)}</button>`;
+  let fig = 1;
+  body.innerHTML = PAGE.sections.map((s, k) => {
+    const paras = [].concat(s.p || []).map((p, j) => `<p>${DG.md(p)}${j === 0 && s.chips && s.chips.length ? ' ' + s.chips.map(chip).join(' ') : ''}</p>`).join('');
+    const crop = s.crop ? `</div><figure class="col g"><div class="fig dg-scroll" tabindex="0" data-crop="${k}" aria-label="Figure ${++fig}"></div><figcaption><b>Figure ${fig}.</b> ${DG.md(s.cropCaption || `${s.h}, cropped from figure 1 at full size.`)}</figcaption></figure><div class="col g">` : '';
+    return `<div class="col g"><h2>${DG.md(s.h)}</h2>${s.aside ? `<aside>${DG.md(s.aside)}</aside>` : ''}${paras}${crop}</div>`;
+  }).join('') + (PAGE.more || []).map(m => `<div class="col g"><h2>${DG.md(m.h)}</h2>${[].concat(m.p).map(p => `<p>${DG.md(p)}</p>`).join('')}</div>`).join('');
+  // A section with "crop": true gets its own figure: the same drawing cut to its boxes, at full size.
+  const tpl = document.getElementById('crop').content.firstElementChild;
+  document.querySelectorAll('[data-crop]').forEach((box, j) => {
+    const s = PAGE.sections[+box.dataset.crop], dg = tpl.cloneNode(true);
+    dg.dataset.dg = 'f' + (j + 2);
+    // the copy's ids must stay unique on the page
+    dg.querySelectorAll('*').forEach(e => [...e.attributes].forEach(a => { if (/(^|[\s#])f2-/.test(a.value)) e.setAttribute(a.name, a.value.replace(/(^|[\s#])f2-/g, `$1f${j + 2}-`)); }));
+    box.appendChild(dg); dg.dataset.dw = dg.dataset.w; DG.crop(dg, s.cropNodes || s.nodes, 36);
+  });
+  const chips = [...document.querySelectorAll('.chip')];
+  chips.forEach(c => {
+    const s = items[c.dataset.n]; if (!s) return;
+    const on = () => { chips.forEach(x => x.classList.toggle('on', x === c)); DG.light(f1, { edges: s.edges || [], nodes: s.nodes || [] }); };
+    const off = () => { c.classList.remove('on'); DG.light(f1); };
+    c.addEventListener('mouseenter', on); c.addEventListener('mouseleave', off); c.addEventListener('focus', on); c.addEventListener('blur', off);
+    c.addEventListener('click', () => { on(); const r = f1.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) f1.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth', block: 'center' }); });
+  });
+})();
+</script>
+</body>
+</html>

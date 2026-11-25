@@ -1,0 +1,44 @@
+{
+  "order": 70,
+  "id": "iso",
+  "name": "Isometric",
+  "offered": true,
+  "after": "isometric infrastructure drawings (FossFLOW, vendor 3D icon sets)",
+  "blurb": "The whole model tipped into isometric: zones become raised plates, boxes become blocks with their logo standing on top, lines run along the ground.",
+  "good": "Overview slides, posters and onboarding: where things run, at a glance. Not for detailed data flows; use a flat style for those.",
+  "source": "the isometric look of FossFLOW (MIT) and cloud vendors' 3D diagrams, drawn by our renderer; no icons or art copied.",
+  "swatch": "#2f80ed",
+  "rules": [
+    "Zones are raised plates, nested zones sit a step higher",
+    "Every box is a block of the same height; the logo stands on top",
+    "Lines run on the ground, labels stand upright",
+    "Keep it under about 15 boxes, or it turns into a city"
+  ],
+  "bg": "#f3f5fa",
+  "font": "Hanken Grotesk",
+  "subFont": "Hanken Grotesk",
+  "ink": "#1b2333",
+  "sub": "#4a5568",
+  "pal": {
+    "violet": {"stroke": "#6b4fe0", "fill": "#e8e3ff"},
+    "blue": {"stroke": "#2470d6", "fill": "#e1ecfb"},
+    "amber": {"stroke": "#b45f00", "fill": "#fbebd6"},
+    "green": {"stroke": "#2c8a45", "fill": "#dff1e4"},
+    "red": {"stroke": "#cc3333", "fill": "#fbe3e3"}
+  },
+  "zone": {"mode": "iso", "r": 0, "sw": 1.4, "size": 13},
+  "node": {"fill": "#ffffff", "stroke": "#b8c2d6", "sw": 1, "r": 0, "size": 13, "subSize": 11, "badge": "tile", "bs": 32, "weight": 700},
+  "edge": {"c": "#334155", "sw": 1.8, "head": "solid", "r": 0, "hot": {"c": "#2470d6", "sw": 3.4}},
+  "title": {"mode": "left", "size": 28, "weight": 800},
+  "iso": {"k": 0.78, "depth": 16, "plate": 8},
+  "dark": {
+    "bg": "#121722", "ink": "#eef2f8", "sub": "#aab4c5",
+    "pal": {
+      "violet": {"stroke": "#a58cff", "fill": "#2a2445"}, "blue": {"stroke": "#5ea8ff", "fill": "#1b2b44"},
+      "amber": {"stroke": "#f0a040", "fill": "#3a2b17"}, "green": {"stroke": "#5ccf7c", "fill": "#18352a"},
+      "red": {"stroke": "#ff7a7a", "fill": "#3d1f24"}
+    },
+    "node": {"fill": "#232b3a", "stroke": "#45526a"},
+    "edge": {"c": "#c7d0de", "hot": {"c": "#5ea8ff", "sw": 3.4}}
+  }
+}

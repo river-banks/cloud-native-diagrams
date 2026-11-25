@@ -1,0 +1,77 @@
+{
+  "order": 60,
+  "id": "dark",
+  "name": "Dark",
+  "offered": true,
+  "after": "Grafana and GitHub dark dashboards",
+  "blurb": "Near-black panels with a coloured edge per stage, brand tiles that glow against the dark, and the main path in amber.",
+  "good": "Slides in a dark deck, on-call and SRE material, screens next to real dashboards.",
+  "source": "Grafana and GitHub dark themes.",
+  "swatch": "#0d1117",
+  "rules": [
+    "Panels, not outlines; colour only on the left edge and title",
+    "Brand tiles on every product",
+    "Main path in amber, everything else grey",
+    "Monospace for roles, sans for names"
+  ],
+  "bg": "#0d1117",
+  "font": "Hanken Grotesk",
+  "subFont": "JetBrains Mono",
+  "ink": "#e6edf3",
+  "sub": "#8b949e",
+  "pal": {
+    "violet": {
+      "stroke": "#b392f0"
+    },
+    "blue": {
+      "stroke": "#58a6ff"
+    },
+    "amber": {
+      "stroke": "#e3b341"
+    },
+    "green": {
+      "stroke": "#56d364"
+    },
+    "red": {
+      "stroke": "#f47067"
+    }
+  },
+  "zone": {
+    "mode": "bar",
+    "r": 10,
+    "sw": 1,
+    "size": 13,
+    "fill": "#161b22",
+    "line": "#30363d"
+  },
+  "node": {
+    "fill": "#1f252e",
+    "stroke": "#363e49",
+    "sw": 1,
+    "r": 8,
+    "size": 13.5,
+    "subSize": 11,
+    "badge": "tile",
+    "bs": 34,
+    "weight": 600,
+    "glyphTile": {
+      "bg": "#2d3540"
+    }
+  },
+  "edge": {
+    "c": "#6e7681",
+    "sw": 1.5,
+    "head": "solid",
+    "r": 8,
+    "hot": {
+      "c": "#e3b341",
+      "sw": 2.2
+    }
+  },
+  "title": {
+    "mode": "left",
+    "size": 26,
+    "weight": 700
+  },
+  "dark": {}
+}

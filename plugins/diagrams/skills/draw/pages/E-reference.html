@@ -1,0 +1,109 @@
+<!doctype html>
+<!--LANG-->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><!--TITLE--></title>
+<style>
+/* Layout E, Reference (Wiki). Lead and fact box first, then the drawing across the full content width (the
+   contents list is a bar, so it never takes width from the drawing), then a table whose rows light up their
+   path: one row per flow when the model names flows, else one per numbered zone.
+   After: an encyclopedia article with an infobox; government guidance pages. */
+/*FONTS*/
+@theme light { --bg:#ffffff; --side:#f6f5f8; --ink:#1d1b21; --muted:#5a5662; --rule:#dedbe3; --accent:#6a2c86; }
+@theme dark { --bg:#151419; --side:#1d1c22; --ink:#ebe9ef; --muted:#a6a2ad; --rule:#36343d; --accent:#d4a6ea; }
+/*DGCSS*/
+*{box-sizing:border-box} html,body{margin:0}
+body{background:var(--bg); color:var(--ink); font:17px/1.6 var(--body)}
+a{color:var(--accent)}
+.g{max-width:1560px; margin:0 auto; padding-inline:max(16px, env(safe-area-inset-left,0px))}
+.site{border-bottom:1px solid var(--rule); background:var(--side)}
+.site .g{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding-block:10px; font-size:15px; color:var(--muted)}
+.toc{position:sticky; top:0; z-index:3; background:var(--bg); border-bottom:1px solid var(--rule)}
+.toc .g{display:flex; gap:22px; overflow-x:auto; padding-block:10px; font-size:15px; white-space:nowrap}
+.toc span{color:var(--muted)}
+.lead{display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:40px; padding-block:26px 18px}
+h1{font:800 clamp(30px,3.6vw,40px)/1.15 var(--head); margin:0 0 4px}
+.sub{color:var(--muted); margin:0 0 16px; font-size:15px}
+.lead p{max-width:72ch}
+.info{border:1px solid var(--rule); background:var(--side); border-radius:4px; font-size:15px; align-self:start}
+.info h2{font:800 15px/1.3 var(--head); margin:0; padding:10px 14px; border-bottom:1px solid var(--rule)}
+.info dl{margin:0; display:grid; grid-template-columns:auto 1fr; gap:6px 14px; padding:12px 14px}
+.info dt{color:var(--muted)} .info dd{margin:0; font-weight:600}
+h2.s{font:800 24px/1.25 var(--head); margin:34px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--rule); scroll-margin-top:60px}
+.doors{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px}
+.doors button{font:600 15px/1 var(--body); color:var(--ink); background:var(--bg); border:1px solid var(--rule); border-radius:4px; padding:9px 12px 9px 10px; display:inline-flex; align-items:center; gap:8px; cursor:pointer}
+.doors button .sw{margin:0}
+.doors button[aria-pressed="true"]{border-color:var(--accent); box-shadow:inset 0 -3px 0 var(--accent)}
+.doors button:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+.figure{border:1px solid var(--rule); border-radius:4px}
+.fcap{font-size:14px; color:var(--muted); margin:8px 0 0}
+table{width:100%; border-collapse:collapse; font-size:15.5px}
+.tw{overflow-x:auto}
+th{text-align:left; font-weight:800; padding:9px 12px 9px 0; border-bottom:2px solid var(--ink); white-space:nowrap}
+td{padding:10px 12px 10px 0; border-bottom:1px solid var(--rule); vertical-align:top}
+tbody tr{cursor:pointer} tbody tr:hover td{background:var(--side)}
+tbody tr.on td:first-child{box-shadow:inset 4px 0 0 var(--accent)}
+td:first-child{padding-left:12px; font-weight:800; white-space:nowrap}
+code,.mono{font-family:var(--mono)}
+.cols{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:40px}
+.foot{border-top:1px solid var(--rule); margin-top:40px; padding-block:18px 70px; color:var(--muted); font-size:14px}
+@media (max-width:980px){ .lead{grid-template-columns:1fr} .cols{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="site"><div class="g"><span><!--CRUMB--></span><!--TOGGLE--></div></div>
+<nav class="toc" aria-label="Contents"><div class="g"><span>Contents</span><a href="#map">Map</a><a href="#rows">Parts</a><span id="tocmore"></span></div></nav>
+<main class="g">
+  <div class="lead">
+    <div>
+      <h1><!--TITLE--></h1>
+      <p class="sub"><!--META--></p>
+      <p><!--ANSWER--></p>
+      <p id="how"></p>
+    </div>
+    <aside class="info" aria-label="Facts"><h2>At a glance</h2><dl id="facts"></dl></aside>
+  </div>
+  <h2 class="s" id="map">Map</h2>
+  <div class="doors" role="group" aria-label="Show one part" id="doors"></div>
+  <div class="figure dg-scroll" tabindex="0" aria-label="Map, scrolls sideways on small screens"><!--FIG:main--></div>
+  <p class="fcap" id="fcap"></p>
+  <h2 class="s" id="rows">Parts</h2>
+  <div class="tw"><table><thead><tr><th id="th0">Part</th><th>From</th><th>To</th><th>What moves</th></tr></thead><tbody id="tbody"></tbody></table></div>
+  <div class="cols" id="more"></div>
+  <p class="foot"><!--CAPTION--></p>
+</main>
+<script>
+/*DGJS*/
+(function () {
+  const dg = document.querySelector('.dg'), cap = document.getElementById('fcap'), D = PAGE.doors;
+  const byFlow = D.length && D[0].f !== undefined;
+  const theme = () => document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const sw = d => d.c ? `<span class="sw" data-c="${d.c}"></span>` : `<b>${DG.esc(d.n)}</b>`;
+  const paint = () => { const hex = PAGE.flowHex[theme()]; document.querySelectorAll('.sw[data-c]').forEach(s => s.style.setProperty('--c', hex[s.dataset.c])); };
+  document.getElementById('facts').innerHTML = PAGE.facts.map(([k, v]) => `<dt>${DG.esc(k)}</dt><dd>${DG.md(v)}</dd>`).join('');
+  document.getElementById('how').textContent = `Pick a ${byFlow ? 'path' : 'part'} above the map, or a row in the table, to see only it.`;
+  document.getElementById('th0').textContent = byFlow ? 'Path' : 'Part';
+  if (!byFlow) document.querySelector('thead').innerHTML = '<tr><th>Part</th><th>Box</th><th>Role</th></tr>';
+  const ALL = byFlow ? `All ${D.length} paths.` : `All ${D.length} parts.`;
+  document.getElementById('doors').innerHTML = `<button type="button" aria-pressed="true" data-k="">All</button>` + D.map((d, i) => `<button type="button" aria-pressed="false" data-k="${i}">${sw(d)}${DG.esc(d.t)}</button>`).join('');
+  document.getElementById('tbody').innerHTML = D.map((d, i) => d.rows.map((r, j) => `<tr data-k="${i}" tabindex="0">${j === 0 ? `<td rowspan="${d.rows.length}">${sw(d)}${DG.esc(d.t)}</td>` : ''}${r.slice(0, byFlow ? 3 : 2).map(x => `<td>${DG.md(x || '')}</td>`).join('')}</tr>`).join('')).join('');
+  document.getElementById('more').innerHTML = (PAGE.more || []).map((m, i) => `<section><h2 class="s" id="more${i}">${DG.md(m.h)}</h2>${[].concat(m.p).map(p => `<p>${DG.md(p)}</p>`).join('')}</section>`).join('');
+  document.getElementById('tocmore').outerHTML = (PAGE.more || []).map((m, i) => `<a href="#more${i}">${DG.esc(m.h)}</a>`).join('');
+  paint(); document.addEventListener('dg-theme', paint); matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paint);
+  const btns = [...document.querySelectorAll('#doors button')], rows = [...document.querySelectorAll('#tbody tr')];
+  function pick(k) {
+    btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.k === k)));
+    rows.forEach(r => r.classList.toggle('on', r.dataset.k === k));
+    if (k === '') { DG.light(dg); cap.textContent = ALL; return; }
+    const d = D[+k];
+    DG.light(dg, byFlow ? { flows: [d.f], nodes: d.nodes } : { nodes: d.nodes, edges: d.edges });
+    cap.innerHTML = `${DG.esc(d.t)}: ${d.rows.length} ${byFlow ? (d.rows.length === 1 ? 'line' : 'lines') : (d.rows.length === 1 ? 'box' : 'boxes')}.`;
+  }
+  btns.forEach(b => b.addEventListener('click', () => pick(b.dataset.k)));
+  rows.forEach(r => { const go = () => { pick(r.dataset.k); document.getElementById('map').scrollIntoView({ block: 'start' }); }; r.addEventListener('click', go); r.addEventListener('keydown', e => { if (e.key === 'Enter') go(); }); });
+  pick('');
+})();
+</script>
+</body>
+</html>

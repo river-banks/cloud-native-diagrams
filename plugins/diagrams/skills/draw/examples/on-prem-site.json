@@ -1,0 +1,53 @@
+{
+ "id": "on-prem-site",
+ "order": 40,
+ "code": "DC",
+ "w": 1630,
+ "h": 910,
+ "title": "On-prem site: apps on Proxmox and RKE2",
+ "type": "Network and deployment",
+ "scope": "Manchester data centre, production",
+ "updated": "2026-11-07",
+ "contract": ["How does traffic reach the apps in our own data centre, and where does their data live?", "Infrastructure and network engineers", "The VLANs, the Proxmox hosts, the cluster on them, storage and backups, and who manages them", "IP addresses, switch and cabling detail, the inside of the planned second site", "Runbooks and change reviews, laptop"],
+ "kicker": "Site view",
+ "zones": [
+  {"id": "out", "n": 1, "t": "Staff and internet", "x": 20, "y": 100, "w": 250, "h": 310, "c": "violet"},
+  {"id": "dc", "n": 2, "t": "Manchester DC", "x": 360, "y": 100, "w": 1250, "h": 790, "c": "blue", "kind": "site"},
+  {"id": "dmz", "t": "DMZ, VLAN 10", "kind": "vlan", "in": "dc", "x": 390, "y": 150, "w": 260, "h": 720, "c": "red"},
+  {"id": "srv", "t": "Servers, VLAN 20", "kind": "vlan", "in": "dc", "x": 680, "y": 150, "w": 630, "h": 530},
+  {"id": "pve", "t": "Proxmox, 3 hosts", "kind": "node", "in": "srv", "x": 700, "y": 190, "w": 590, "h": 470},
+  {"id": "rke", "t": "rke2-prod", "kind": "cluster", "in": "pve", "x": 720, "y": 300, "w": 550, "h": 340, "c": "green"},
+  {"id": "sto", "t": "Storage, VLAN 30", "kind": "vlan", "in": "dc", "x": 1340, "y": 150, "w": 250, "h": 530, "c": "amber"},
+  {"id": "mgmt", "t": "Management, VLAN 99", "kind": "vlan", "in": "dc", "x": 680, "y": 710, "w": 910, "h": 160}
+ ],
+ "nodes": [
+  {"id": "staff", "t": "Staff", "s": ["office and VPN"], "b": "g:users", "x": 40, "y": 170, "w": 210, "h": 64},
+  {"id": "web", "t": "Internet", "s": ["public site visitors"], "b": "g:globe", "x": 40, "y": 300, "w": 210, "h": 64},
+  {"id": "fw", "t": "Firewall", "s": ["OPNsense, HA pair"], "b": "opnsense", "x": 410, "y": 200, "w": 220, "h": 64},
+  {"id": "lb", "t": "HAProxy", "s": ["TLS, health checks"], "b": "haproxy", "x": 410, "y": 400, "w": 220, "h": 64},
+  {"id": "pvebox", "t": "Proxmox VE", "s": ["VMs, HA groups"], "b": "proxmox", "x": 1070, "y": 230, "w": 200, "h": 56},
+  {"id": "rancher", "t": "Rancher", "s": ["cluster admin"], "b": "rancher", "x": 740, "y": 350, "w": 200, "h": 64},
+  {"id": "apps", "t": "Apps", "s": ["Deployments"], "b": "k8s-deploy", "x": 740, "y": 540, "w": 200, "h": 64, "hero": 1},
+  {"id": "csi", "t": "Ceph CSI", "s": ["mounts volumes"], "b": "ceph", "x": 1070, "y": 350, "w": 200, "h": 64},
+  {"id": "prom", "t": "Prometheus", "s": ["scrapes, alerts"], "b": "prometheus", "x": 1070, "y": 540, "w": 200, "h": 64},
+  {"id": "ceph", "t": "Ceph", "s": ["block storage"], "b": "ceph", "x": 1360, "y": 210, "w": 210, "h": 64},
+  {"id": "nas", "t": "TrueNAS", "s": ["backups, 30 days"], "b": "truenas", "x": 1360, "y": 420, "w": 210, "h": 64},
+  {"id": "ansible", "t": "Ansible", "s": ["host config"], "b": "ansible", "x": 700, "y": 770, "w": 200, "h": 64},
+  {"id": "graf", "t": "Grafana", "s": ["dashboards"], "b": "grafana", "x": 960, "y": 770, "w": 200, "h": 64},
+  {"id": "dr", "t": "Second site", "s": ["replica, planned"], "b": "g:building", "x": 1360, "y": 770, "w": 210, "h": 64, "ghost": 1}
+ ],
+ "edges": [
+  {"from": "staff", "to": "fw", "l": ["HTTPS 443", "staff apps"], "hot": 1, "step": 1},
+  {"from": "web", "to": "fw", "l": ["HTTPS 443", "public site"]},
+  {"from": "fw", "to": "lb", "l": ["HTTPS 443", "allowed only"], "hot": 1, "step": 2},
+  {"from": "lb", "to": "apps", "l": ["HTTPS 443", "to ingress"], "hot": 1, "step": 3},
+  {"from": "rancher", "to": "apps", "l": ["kube API", "deploys"], "dash": 1},
+  {"from": "apps", "to": "csi", "l": ["CSI", "volume claims"]},
+  {"from": "csi", "to": "ceph", "l": ["RBD 6789", "block I/O"], "hot": 1, "step": 4},
+  {"from": "ceph", "to": "nas", "l": ["NFS 2049", "nightly backup"], "dash": 1},
+  {"from": "apps", "to": "prom", "l": ["HTTP 8080", "/metrics"], "dash": 1},
+  {"from": "prom", "to": "graf", "l": ["HTTP 9090", "PromQL"]},
+  {"pts": [[700, 802], [665, 802], [665, 258], [1070, 258]], "from": "ansible", "to": "pvebox", "l": ["SSH 22", "config runs"], "dash": 1},
+  {"from": "nas", "to": "dr", "l": ["ZFS send", "to confirm"], "dot": 1}
+ ]
+}

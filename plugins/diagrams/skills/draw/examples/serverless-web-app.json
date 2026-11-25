@@ -1,0 +1,43 @@
+{
+ "id": "serverless-web-app",
+ "order": 20,
+ "code": "WA",
+ "w": 1140,
+ "h": 550,
+ "title": "Serverless web app",
+ "type": "Architecture",
+ "scope": "Customer web app, one AWS region",
+ "updated": "2026-11-07",
+ "contract": ["How does a customer request reach the data, and how does code reach production?", "Engineers new to the app", "The request path from browser to DynamoDB and S3, the deploy path, and where logs go", "Auth details, environments other than production, costs", "README and design reviews, light background, laptop"],
+ "kicker": "Reference architecture",
+ "zones": [
+  {"id": "edge", "n": 1, "t": "Edge", "x": 20, "y": 100, "w": 300, "h": 220, "c": "violet"},
+  {"id": "api", "n": 2, "t": "API", "x": 440, "y": 100, "w": 300, "h": 220, "c": "amber"},
+  {"id": "data", "n": 3, "t": "Data", "x": 820, "y": 100, "w": 300, "h": 220, "c": "blue"},
+  {"id": "ship", "n": 4, "t": "Delivery", "x": 20, "y": 360, "w": 720, "h": 170, "c": "green"},
+  {"id": "watch", "n": 5, "t": "Observability", "x": 820, "y": 360, "w": 300, "h": 170, "c": "red"}
+ ],
+ "nodes": [
+  {"id": "user", "t": "Customer", "s": ["browser", "or app"], "b": "g:person", "x": 40, "y": 150, "w": 120, "h": 112, "lay": "top"},
+  {"id": "cdn", "t": "CloudFront", "s": ["cache, TLS"], "b": "cloudfront", "x": 180, "y": 150, "w": 120, "h": 112, "lay": "top"},
+  {"id": "apigw", "t": "API Gateway", "s": ["auth, routes"], "b": "apigateway", "x": 460, "y": 150, "w": 120, "h": 112, "lay": "top"},
+  {"id": "fn", "t": "Lambda", "s": ["business", "logic"], "b": "lambda", "x": 600, "y": 150, "w": 120, "h": 112, "lay": "top", "hero": 1},
+  {"id": "db", "t": "DynamoDB", "s": ["orders, sessions"], "b": "dynamodb", "x": 840, "y": 150, "w": 260, "h": 56},
+  {"id": "files", "t": "S3", "s": ["uploads, assets"], "b": "s3", "x": 840, "y": 226, "w": 260, "h": 56},
+  {"id": "repo", "t": "GitHub", "s": ["source"], "b": "github", "x": 40, "y": 420, "w": 170, "h": 64},
+  {"id": "ci", "t": "GitHub Actions", "s": ["test, build"], "b": "githubactions", "x": 240, "y": 420, "w": 170, "h": 64},
+  {"id": "iac", "t": "Terraform", "s": ["deploy infra"], "b": "terraform", "x": 540, "y": 420, "w": 180, "h": 64},
+  {"id": "cw", "t": "CloudWatch", "s": ["logs, alarms"], "b": "cloudwatch", "x": 840, "y": 420, "w": 260, "h": 64}
+ ],
+ "edges": [
+  {"pts": [[160, 206], [180, 206]], "step": 1, "hot": 1},
+  {"pts": [[300, 206], [460, 206]], "step": 2, "hot": 1, "l": ["HTTPS 443", "cache misses"]},
+  {"pts": [[580, 206], [600, 206]], "step": 3, "hot": 1},
+  {"pts": [[720, 178], [840, 178]], "step": 4, "hot": 1, "l": ["HTTPS 443", "read, write"]},
+  {"pts": [[720, 254], [840, 254]], "l": ["HTTPS 443", "uploads"]},
+  {"pts": [[210, 452], [240, 452]]},
+  {"pts": [[510, 452], [540, 452]]},
+  {"pts": [[630, 420], [630, 262]], "dash": 1, "l": ["deploy", "on merge"]},
+  {"pts": [[700, 262], [700, 340], [1060, 340], [1060, 420]], "dash": 1, "l": ["HTTPS 443", "logs"]}
+ ]
+}
