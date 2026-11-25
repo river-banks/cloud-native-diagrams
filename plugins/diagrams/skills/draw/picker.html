@@ -251,7 +251,7 @@ const DiagramModel = (() => {
   // The style id for a look the user named: the id or the display name, any case ("Isometric", "iso", "DARK"). null if none.
   const lookId = (styles, name) => { const k = String(name || '').trim().toLowerCase(); const s = styles.find(s => String(s.id).toLowerCase() === k || String(s.name).toLowerCase() === k); return s ? s.id : null; };
 
-  return { lookId, ends, zoneOf, parentZone, describe, label, inBox, sequence, FLOW_HUES, flowHues, isDark };
+  return { lookId, ends, zoneOf, parentZone, describe, label, lineKind, inBox, sequence, FLOW_HUES, flowHues, isDark };
 })();
 if (typeof module !== 'undefined') module.exports = DiagramModel;
 

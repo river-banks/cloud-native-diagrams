@@ -43,12 +43,35 @@ table{width:100%; border-collapse:collapse; font-size:15.5px}
 th{text-align:left; font-weight:800; padding:9px 12px 9px 0; border-bottom:2px solid var(--ink); white-space:nowrap}
 td{padding:10px 12px 10px 0; border-bottom:1px solid var(--rule); vertical-align:top}
 tbody tr{cursor:pointer} tbody tr:hover td{background:var(--side)}
-tbody tr.on td:first-child{box-shadow:inset 4px 0 0 var(--accent)}
-td:first-child{padding-left:12px; font-weight:800; white-space:nowrap}
+/* The path cell spans its flow's rows (rowspan), so later rows start with a From cell: style by class, never
+   by :first-child, or every row after the first reads bold and indented like a different kind of row. */
+td.path{padding-left:12px; font-weight:800; white-space:nowrap}
+tbody tr.on td.path{box-shadow:inset 4px 0 0 var(--accent)}
+/* Line labels never render under 12 px (STANDARD rule 8): the figure stops shrinking at the scale that keeps its
+   smallest line label at 12 px (page.js works that scale out as --dg-lmin) and scrolls sideways below it. */
+.figure .dg{--dg-min:var(--dg-lmin, .85)}
 code,.mono{font-family:var(--mono)}
 .cols{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:40px}
 .foot{border-top:1px solid var(--rule); margin-top:40px; padding-block:18px 70px; color:var(--muted); font-size:14px}
 @media (max-width:980px){ .lead{grid-template-columns:1fr} .cols{grid-template-columns:1fr} }
+/* Phone: no sideways scroll in the table. Each row stacks: the path once as a heading, From -> To on one line,
+   what moves under it. */
+@media (max-width:640px){
+  .tw{overflow:visible}
+  table,tbody,tr,td{display:block}
+  /* display:block drops the table role in some screen readers; the markup states the roles (table, row, cell,
+     columnheader) so the visually hidden headers still name each cell. */
+  thead{position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%)}
+  tbody tr{padding:8px 12px 10px; border-bottom:1px solid var(--rule)}
+  tbody tr.on{box-shadow:inset 4px 0 0 var(--accent)}
+  tbody tr:hover td{background:none} tbody tr:hover{background:var(--side)}
+  td{padding:0; border:0}
+  td.path{padding:0 0 4px; white-space:normal; box-shadow:none!important}
+  td.from,td.to{display:inline; font-weight:600}
+  td.to::before{content:"\00a0\2192\00a0"; color:var(--muted); font-weight:400}
+  td.what,td.role{color:var(--muted); margin-top:2px}
+  td.box{font-weight:600}
+}
 </style>
 </head>
 <body>
@@ -69,7 +92,7 @@ code,.mono{font-family:var(--mono)}
   <div class="figure dg-scroll" tabindex="0" aria-label="Map, scrolls sideways on small screens"><!--FIG:main--></div>
   <p class="fcap" id="fcap"></p>
   <h2 class="s" id="rows">Parts</h2>
-  <div class="tw"><table><thead><tr><th id="th0">Part</th><th>From</th><th>To</th><th>What moves</th></tr></thead><tbody id="tbody"></tbody></table></div>
+  <div class="tw"><table role="table"><thead role="rowgroup"><tr role="row"><th role="columnheader" id="th0">Part</th><th role="columnheader">From</th><th role="columnheader">To</th><th role="columnheader">What moves</th></tr></thead><tbody id="tbody" role="rowgroup"></tbody></table></div>
   <div class="cols" id="more"></div>
   <p class="foot"><!--CAPTION--></p>
 </main>
@@ -84,10 +107,11 @@ code,.mono{font-family:var(--mono)}
   document.getElementById('facts').innerHTML = PAGE.facts.map(([k, v]) => `<dt>${DG.esc(k)}</dt><dd>${DG.md(v)}</dd>`).join('');
   document.getElementById('how').textContent = `Pick a ${byFlow ? 'path' : 'part'} above the map, or a row in the table, to see only it.`;
   document.getElementById('th0').textContent = byFlow ? 'Path' : 'Part';
-  if (!byFlow) document.querySelector('thead').innerHTML = '<tr><th>Part</th><th>Box</th><th>Role</th></tr>';
+  if (!byFlow) document.querySelector('thead').innerHTML = '<tr role="row"><th role="columnheader">Part</th><th role="columnheader">Box</th><th role="columnheader">Role</th></tr>';
+  const cls = byFlow ? ['from', 'to', 'what'] : ['box', 'role'];
   const ALL = byFlow ? `All ${D.length} paths.` : `All ${D.length} parts.`;
   document.getElementById('doors').innerHTML = `<button type="button" aria-pressed="true" data-k="">All</button>` + D.map((d, i) => `<button type="button" aria-pressed="false" data-k="${i}">${sw(d)}${DG.esc(d.t)}</button>`).join('');
-  document.getElementById('tbody').innerHTML = D.map((d, i) => d.rows.map((r, j) => `<tr data-k="${i}" tabindex="0">${j === 0 ? `<td rowspan="${d.rows.length}">${sw(d)}${DG.esc(d.t)}</td>` : ''}${r.slice(0, byFlow ? 3 : 2).map(x => `<td>${DG.md(x || '')}</td>`).join('')}</tr>`).join('')).join('');
+  document.getElementById('tbody').innerHTML = D.map((d, i) => d.rows.map((r, j) => `<tr role="row" data-k="${i}" tabindex="0">${j === 0 ? `<td role="cell" class="path" rowspan="${d.rows.length}">${sw(d)}${DG.esc(d.t)}</td>` : ''}${r.slice(0, cls.length).map((x, c) => `<td role="cell" class="${cls[c]}">${DG.md(x || '')}</td>`).join('')}</tr>`).join('')).join('');
   document.getElementById('more').innerHTML = (PAGE.more || []).map((m, i) => `<section><h2 class="s" id="more${i}">${DG.md(m.h)}</h2>${[].concat(m.p).map(p => `<p>${DG.md(p)}</p>`).join('')}</section>`).join('');
   document.getElementById('tocmore').outerHTML = (PAGE.more || []).map((m, i) => `<a href="#more${i}">${DG.esc(m.h)}</a>`).join('');
   paint(); document.addEventListener('dg-theme', paint); matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paint);

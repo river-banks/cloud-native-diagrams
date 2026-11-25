@@ -8,6 +8,8 @@
 //   (a box or label not lit) under 4.5:1 on what is under it, in either theme;
 //   more than two font families loaded, or IBM Plex Sans missing on a Clear page; an accent colour with a hue in
 //   150-260 or 15-40 (design-with-mobbin), in either theme; sideways page scroll at phone width (390 px).
+//   Layout E also fails on: an empty "What moves" cell (also on a copy of lab-access with most line labels taken
+//   off); a line label rendered under 12 px at a 1024 px window; a table wider than its box at 390 px.
 //   node check-pages.js [OUTDIR]      every layout x every offered look on incident-response, and the six layouts on
 //                                     lab-access and the wide kubernetes-platform drawing; with OUTDIR it keeps the pages
 const fs = require('fs'), os = require('os'), path = require('path');
@@ -192,12 +194,68 @@ const hue = css => {
         await p.click('.dg-theme button[data-t="auto"]');
         const same = await p.evaluate(() => { const now = [...document.querySelectorAll('.dg > svg')]; return now.length === window.__twins.length && now.every((s, i) => s === window.__twins[i]); });
         if (!same) fail('the twins were replaced during theme changes (a theme change must not redraw)');
-        if (look === 'clear') {
+        if (L.id === 'E') {
+          const blank = await p.evaluate(() => [...document.querySelectorAll('#tbody td.what')].filter(td => !td.textContent.trim()).length);
+          if (blank) fail(`${blank} empty "What moves" cells`);
+          // The path cell spans its rows, so later rows start with a From cell: every non-path cell of one kind must
+          // look the same on every row, and only path cells are bold (a td:first-child rule would break both).
+          const odd = await p.evaluate(() => {
+            const out = [], seen = {};
+            document.querySelectorAll('#tbody td').forEach(td => {
+              const cs = getComputedStyle(td), look = `${cs.fontWeight} ${cs.paddingLeft} ${cs.whiteSpace}`;
+              if (td.classList.contains('path')) return;
+              if (+cs.fontWeight >= 800) out.push(`"${td.textContent.trim()}" (${td.className}) is bold like a path cell`);
+              if (seen[td.className] === undefined) seen[td.className] = look;
+              else if (seen[td.className] !== look) out.push(`"${td.textContent.trim()}" (${td.className}) reads ${look}, not ${seen[td.className]} like its column's first cell`);
+            });
+            return out;
+          });
+          if (odd.length) fail(`table rows styled unlike each other: ${odd.slice(0, 3).join('; ')}`);
+          await p.setViewportSize({ width: 1024, height: 900 }); await p.waitForTimeout(100);
+          const small = await p.evaluate(() => {
+            const out = [];
+            document.querySelectorAll('.dg > svg').forEach(svg => {
+              if (!svg.getBoundingClientRect().width) return;
+              const k = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width;
+              svg.querySelectorAll('.edge-label text').forEach(t => { const px = parseFloat(getComputedStyle(t).fontSize) * k; if (px < 12 - 1e-3) out.push(`"${t.textContent}" ${px.toFixed(1)} px`); });
+            });
+            return out;
+          });
+          if (small.length) fail(`line labels under 12 px at 1024 px wide: ${small.slice(0, 3).join(', ')}${small.length > 3 ? ` and ${small.length - 3} more` : ''}`);
+        }
+        if (look === 'clear' || L.id === 'E') {
           await p.setViewportSize({ width: 390, height: 800 }); await p.waitForTimeout(100);
           const ox = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
           if (ox > 0) fail(`page scrolls sideways by ${ox} px at 390 px wide`);
+          const wide = L.id !== 'E' ? 0 : await p.evaluate(() => [...document.querySelectorAll('table')].filter(t => t.getBoundingClientRect().width > t.parentElement.clientWidth + 1 || t.parentElement.scrollWidth > t.parentElement.clientWidth + 1).length);
+          if (wide) fail(`${wide} tables wider than their box at 390 px wide`);
         }
         await ctx.close(); n++;
+      }
+      // Layout E on a model whose lines mostly have no label: every "What moves" cell must still say something.
+      if (id === 'lab-access') {
+        const M = JSON.parse(JSON.stringify(tw.model)), seen = new Set();
+        M.edges.forEach((e, i) => { if (e.f && (e.f === 'egress' || seen.has(e.f))) delete e.l; if (e.f) seen.add(e.f); if (i % 3 === 0) e.dash = true; });
+        // An unlabelled line into the same box as the flow's labelled first line must borrow that line's label.
+        const DM = require('./model.js'), first = M.edges.find(e => e.f === 'api' && e.l), [a0, b0] = DM.ends(M, first);
+        const other = M.nodes.find(n => n.id !== a0.id && n.id !== b0.id);
+        M.edges.push({ from: other.id, to: b0.id, f: 'api' });
+        const want = [other.t, b0.t, DM.label(first)].join(' | ');
+        const E = LAYOUTS.find(l => l.id === 'E');
+        const file = path.join(dir, `${id}-E-${look}-bare.html`);
+        fs.writeFileSync(file, build(E, tw, M, null, 'light', await D.fontFaces(fonts(tw, E).set)));
+        const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+        await p.goto('file://' + file);
+        const cells = await p.evaluate(() => [...document.querySelectorAll('#tbody td.what')].map(td => td.textContent.trim()));
+        const rows = await p.evaluate(() => [...document.querySelectorAll('#tbody tr')].map(r => ['from', 'to', 'what'].map(c => r.querySelector('td.' + c).textContent.trim()).join(' | ')));
+        const bare = `${id} E bare labels / ${look}`;
+        if (!cells.length || cells.some(c => !c)) errs.push(`${bare}: ${cells.filter(c => !c).length} of ${cells.length} "What moves" cells empty`);
+        if (!rows.includes(want)) errs.push(`${bare}: no row "${want}" (an unlabelled line borrows the label of its flow's line into the same box)`);
+        // A line with nothing to borrow says its flow's name, with ", async or batch" when it is dashed; never a bare line kind.
+        const names = Object.values(M.flows || {}).map(f => f.t);
+        if (cells.some(c => /^(solid|dashed|dotted) line/.test(c))) errs.push(`${bare}: a "What moves" cell says only its line kind ("${cells.find(c => /^(solid|dashed|dotted) line/.test(c))}") where the flow has a name`);
+        if (!cells.some(c => names.includes(c)) || !cells.some(c => names.some(t => c === `${t}, async or batch`))) errs.push(`${bare}: unlabelled lines with nothing to borrow do not fall back to their flow's name (plain, and with ", async or batch" when dashed)`);
+        await p.close();
       }
     }
     if (D.errs.length) errs.push(...D.errs);

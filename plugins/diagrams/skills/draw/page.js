@@ -100,11 +100,19 @@ function prep(svg, prefix, cls, ink) {
   return svg.replace('<svg ', `<svg class="${cls}"${ink ? ` style="--dg-ink:${ink}"` : ''} `);
 }
 
+// The smallest scale that keeps every line label at 12 px or more on screen (STANDARD rule 8), never under the
+// usual 85%. A layout opts in by setting --dg-min:var(--dg-lmin) on its figure.
+function labelMin(tw) {
+  const sizes = [tw.light.svg, tw.dark.svg].flatMap(svg => [...svg.matchAll(/<g class="edge-label"[^>]*>([\s\S]*?)<\/g>/g)]
+    .flatMap(g => [...g[1].matchAll(/font-size="([\d.]+)"/g)].map(m => +m[1])));
+  return sizes.length ? Math.max(.85, Math.min(1, 12 / Math.min(...sizes))) : .85;
+}
+
 function figure(tw, name, title) {
-  const W = tw.light.w, H = tw.light.h;
+  const W = tw.light.w, H = tw.light.h, lmin = +labelMin(tw).toFixed(4);
   let l = prep(tw.light.svg, `${name}-l-`, 'dg-l', tw.light.ink), d = prep(tw.dark.svg, `${name}-d-`, 'dg-d', tw.dark.ink);
   if (title) l = l.replace(/(<title[^>]*>)[^<]*/, (m, a) => a + esc(title)), d = d.replace(/(<title[^>]*>)[^<]*/, (m, a) => a + esc(title));
-  return `<div class="dg" data-dg="${name}" data-w="${W}" data-h="${H}" style="--dw:${W};--dh:${H}">${l}${d}</div>`;
+  return `<div class="dg" data-dg="${name}" data-w="${W}" data-h="${H}" style="--dw:${W};--dh:${H};--dg-lmin:${lmin}">${l}${d}</div>`;
 }
 
 /* ------------------------------------------------------------ fonts: at most two families on a page */
@@ -148,9 +156,22 @@ function content(M, tw, given) {
   const small = sections.filter(s => s.nodes.length >= 2 && s.nodes.length <= 6).pop();
   if (small && sections.length > 1) small.crop = true;
   const flows = Object.entries(M.flows || {}).filter(([k]) => M.edges.some(e => e.f === k));
+  // What moves on a line: its own label, else the label of another line in the same flow that ends at the same box,
+  // else the flow's name with the line's kind as a suffix when it is dashed or dotted ("Answers coming back, async or
+  // batch"), so no row is blank. The bare kind of line is said only when the flow has no name.
+  const KIND = { '': 'solid line', async: 'dashed line (async or batch)', 'to confirm': 'dotted line (to confirm)' };
+  const SUFFIX = { '': '', async: ', async or batch', 'to confirm': ', to confirm' };
+  const moves = (i, idx, name) => {
+    if (words(M.edges[i])) return words(M.edges[i]);
+    const to = ends[i][1] && ends[i][1].id;
+    const twin = to ? idx.find(j => j !== i && ends[j][1] && ends[j][1].id === to && words(M.edges[j])) : undefined;
+    if (twin !== undefined) return words(M.edges[twin]);
+    const kind = DM.lineKind(M.edges[i]);
+    return name ? name + SUFFIX[kind] : KIND[kind];
+  };
   const doors = flows.length ? flows.map(([k, f]) => {
     const idx = M.edges.map((e, i) => i).filter(i => M.edges[i].f === k);
-    return { f: k, t: f.t, c: f.c, rows: idx.map(i => [ends[i][0] && ends[i][0].t, ends[i][1] && ends[i][1].t, words(M.edges[i])]),
+    return { f: k, t: f.t, c: f.c, rows: idx.map(i => [ends[i][0] && ends[i][0].t, ends[i][1] && ends[i][1].t, moves(i, idx, f.t)]),
       nodes: [...new Set(idx.flatMap(i => ends[i].filter(Boolean).map(n => n.id)))], edges: idx };
   }) : zoneItems.map(z => ({ n: z.n, t: z.h, rows: z.nodes.map(id => [byId[id].t, (byId[id].s || []).join(', '), '']), nodes: z.nodes, edges: z.edges }));
   const tagged = Object.entries(M.tags || {}).map(([k, t]) => [t.t, M.nodes.filter(n => n.tag === k).map(n => n.t).join(', ')]).filter(x => x[1]);
