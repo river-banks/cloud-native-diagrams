@@ -1,6 +1,6 @@
 ---
 name: draw
-description: Draw technical diagrams (architecture, system, data flow, incident, deployment) in the Clear standard with real brand logo badges, colour-coded flows and status tags, and in another look when the user names one (Sketch, Blueprint, Isometric, Dark, Infographic). Use when the user asks for an architecture or system diagram, to restyle one, to see the diagram styles or badges, or to build a page (explainer, blog post, wiki page) around a diagram.
+description: Draw technical diagrams (architecture, system, data flow, incident, deployment, sequence) in the Clear standard with real brand logo badges, colour-coded flows and status tags, and in another look when the user names one (Sketch, Blueprint, Isometric, Dark, Infographic). Use when the user asks for an architecture, system or sequence diagram, to restyle one, to see the diagram styles, kinds, layouts or badges as pictures, or to build a page (explainer, blog post, wiki page) around a diagram.
 ---
 
 <!-- The one source of the diagrams skill. `python3 build.py plugin` copies it into plugins/diagrams/skills/draw/ with every file it needs, and `python3 build.py skill` packs the same folder as diagrams-skill.zip (renamed `diagrams`). The same text runs in Claude Code, claude.ai chat, the desktop app and Cowork, so keep every instruction true on all of them. -->
@@ -9,15 +9,32 @@ description: Draw technical diagrams (architecture, system, data flow, incident,
 
 This skill comes with the `diagrams` plugin and works the same in Claude Code, claude.ai, the Claude desktop app and Cowork. You draw the diagram once as data (a model) and export it in the house standard, the `clear` style, as SVG and PNG. `SKILL/STANDARD.md` holds the rules and why; read it once. Clear is the default look. The user can ask for any diagram in another look by name: **Sketch**, **Blueprint**, **Isometric**, **Dark** or **Infographic** (names any case; the ids `sketch`, `blueprint`, `iso`, `dark`, `infographic` work too). Draw in `clear` unless the user names one of those. The first time you draw for the user in a conversation, add one line saying the other five looks exist and show `SKILL/thumbs/six-looks.png` (pictures, never just names). `cloud` and `swiss` stay in the catalogue but are not offered; use them only if the user asks for them by name.
 
+## Pick by picture
+
+`SKILL/gallery.html` shows every choice as a picture, each labelled with the words to ask for it: the **kind** (1 Map, 2 Sequence), the page **layout** (A to F), the **look** (Clear and five others) and **mixes** of them ("page, Plate, Sketch"; filter chips show any look on every layout). `SKILL/thumbs/gallery.png` (light) and `SKILL/thumbs/gallery-dark.png` are the same gallery as one picture, for a surface that cannot show HTML.
+
+- **The user named what they want** ("an architecture diagram of X", "page, Long read, Blueprint"): draw it straight away, in Clear unless they named a look. The gallery is for browsing, never a gate.
+- **The user named nothing, or asks what is possible** ("what can you draw?", "show me the options", "make me a diagram" with no kind or look): show the gallery first and ask for a number, a letter or a mix by its words. Do not ask a text question instead of showing pictures. Show it as you would `picker.html` (see "Just show the styles"): open it on the user's own computer, otherwise copy it to `<out>` and present it, or publish it as a private artifact; if you cannot show HTML, present `thumbs/gallery.png` (or `gallery-dark.png` on a dark surface).
+
+Every page you build, the gallery, the style picker and the preview switch **Light / Dark / Auto** with a toggle that changes the whole page and its drawings together; the choice is remembered per page.
+
+### The four kinds
+
+| | Kind | Use it for | How |
+|---|---|---|---|
+| 1 | **Map** | Architecture, data flow, deployment: the parts and what talks to what. The default. | "Draw a diagram" below; any look, any page layout. |
+| 2 | **Sequence** | One request in time order, one lane per part. | Draw the Map with numbered steps, then export with `--view sequence` (or Mermaid `sequence`). |
+
 `SKILL` below is this skill's base directory, the folder holding this file (`${CLAUDE_SKILL_DIR}`). Run every command with its full path; the scripts work from any folder. The skill folder may be read-only, so never write inside it. `<out>` below is where the user's files go: in Claude Code, the user's project (by default `docs/diagrams/`, so the diagram can be restyled or edited later); on claude.ai, the session's output folder (`/mnt/user-data/outputs`); in Cowork, the user's working folder.
 
 ## Just show the styles
 
 When the user only wants to see or compare the styles or badges:
 
-1. `python3 SKILL/build.py styles` lists the six looks on offer: name, id, what each is good for, and its thumbnail.
-2. Show pictures, not names. `SKILL/picker.html` shows both example systems in every style, plus the searchable badge library; `SKILL/thumbs/six-looks.png` is one diagram in the six looks. On the user's own computer, open `picker.html` (`open` on macOS, `xdg-open` on Linux, `start ""` on Windows). Elsewhere, copy it to `<out>` and present it as a file, or publish it as a private artifact where the app offers one. If you cannot show HTML, present the PNG.
-3. Reply with the six looks as a short list: name, then one line on when to use it. Say that Clear is the default and any diagram can be asked for in another look by name.
+1. If the user wants to see everything (kinds, layouts and mixes too), show `SKILL/gallery.html` as in "Pick by picture" and stop there.
+2. `python3 SKILL/build.py styles` lists the six looks on offer: name, id, what each is good for, and its thumbnail.
+3. Show pictures, not names. `SKILL/picker.html` shows both example systems in every style, plus the searchable badge library; `SKILL/thumbs/six-looks.png` is one diagram in the six looks. On the user's own computer, open `picker.html` (`open` on macOS, `xdg-open` on Linux, `start ""` on Windows). Elsewhere, copy it to `<out>` and present it as a file, or publish it as a private artifact where the app offers one. If you cannot show HTML, present the PNG.
+4. Reply with the six looks as a short list: name, then one line on when to use it. Say that Clear is the default and any diagram can be asked for in another look by name.
 
 For a badge question ("is there a Kafka logo?"), run `python3 SKILL/build.py find kafka`.
 
@@ -83,7 +100,7 @@ If Node and Playwright with Chromium are available (`node -e "require('playwrigh
 node SKILL/export.js <out>/<id>.json clear <out>/<id>
 ```
 
-(or the look the user named: `Sketch`, `Isometric`, `dark` and so on; names and ids both work). This writes `<id>.svg` (fonts embedded) and `<id>.png` (2x). If Playwright is not available, do not install it: tell the user to press Download SVG or Download PNG under the Clear style (or the one they picked) on the preview page.
+(or the look the user named: `Sketch`, `Isometric`, `dark` and so on; names and ids both work). This writes `<id>.svg` (fonts embedded) and `<id>.png` (2x). Add `--theme both` to also write the dark twins, `<id>-dark.svg` and `<id>-dark.png`, in the same run (for a README or docs site that switches with the reader's theme). If Playwright is not available, do not install it: tell the user to press Download SVG or Download PNG under the Clear style (or the one they picked) on the preview page.
 
 If it reports text too long for its box, shorten the text or widen the node and run it again.
 
@@ -105,7 +122,7 @@ Draw the model first (steps 0 to 3 above). Then, by what the user said:
 
 - **A named combination** ("page, Long read, Blueprint, dark"): build it directly.
 - **"Show me all"**: `node SKILL/page.js <out>/<id>.json --sheet layouts --out <out>` draws the diagram once and writes `<id>-layouts.png` (and `.html`): the six layouts, lettered and named. Show the PNG and ask for a letter. Then `node SKILL/page.js <out>/<id>.json --sheet looks --layout <letter> --out <out>` writes `<id>-looks-<letter>.png`, that layout in the six looks; ask for a look. Then build it.
-- **Nothing named**: ask one question: "Should the page explain it, argue a point, or let people look things up?" Recommend a layout for the answer (explain: A, or B when every zone needs a note; argue: C, or D for an incident; look up: E, or F for a drawing wider than about 1600 units), and build it in Clear with the Auto theme.
+- **Nothing named**: show the pictures first. Present `SKILL/gallery.html` (or `SKILL/thumbs/gallery.png`) at its Layout and Mix sections and ask for a letter or a mix by its words ("Plate, Sketch"). If the user would rather you choose, recommend a layout by the reader's job (explain: A, or B when every zone needs a note; argue: C, or D for an incident; look up: E, or F for a drawing wider than about 1600 units) and build it in Clear with the Auto theme. For the user's own drawing on every layout, use "Show me all" above.
 
 Write the page's words in `<out>/<id>.page.json` (keys in `SKILL/pages/README.md`): the title, the answer in one or two sentences before anything else, then the steps, notes, sections or timeline in the reader's words. Use the drawing's own numbers for steps (`n` is the step marker or zone number on the drawing). Leave out what you have nothing real to say about; the model fills the rest. Then:
 
@@ -114,3 +131,4 @@ node SKILL/page.js <out>/<id>.json --layout C --look clear --theme auto --conten
 ```
 
 Present the page as a file the user can open, or publish it as a private artifact where the app offers one. Open it before you hand it over: the answer comes first, the step numbers match the drawing, and nothing is squeezed.
+

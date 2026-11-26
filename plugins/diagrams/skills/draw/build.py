@@ -9,6 +9,9 @@
   python3 build.py preview MODEL.json [OUT.html]
                             lint one diagram model and write a page that draws it in every style,
                             with download buttons (used by the Claude Code plugin; no network)
+  python3 build.py gallery [DIR]
+                            redraw gallery.html and thumbs/gallery.png, gallery-dark.png (node gallery.js): every kind,
+                            layout, look and the mixes as pictures, in light and dark (needs Playwright)
   python3 build.py styles   list the styles: id, name, what each is good for, and its thumbnail
   python3 build.py find WORD [WORD...]
                             list badges and glyphs whose id or name matches, for writing models
@@ -16,7 +19,7 @@
                             package this folder as one uploadable skill named diagrams (SKILL.md is the source)
                             for claude.ai, the Claude desktop app and Cowork; default dist/diagrams-skill.zip
   python3 build.py plugin [DIR]
-                            write ../plugins/diagrams/skills and commands (/diagrams:styles, /diagrams:page), the plugin the
+                            write ../plugins/diagrams/skills and commands (/diagrams:styles, /diagrams:page, /diagrams:gallery), the plugin the
                             marketplace serves: one self-contained skill (`draw`) with the same files as the zip, so it works
                             in claude.ai chat too
 
@@ -287,7 +290,7 @@ def assemble(models, preview=False):
             f'const GLYPHS = {open(path("badges", "glyphs.json")).read()};\n'
             f'const BADGE_DATA = {open(path("badges", "badges.json")).read()};')
     page = open(path('page.html'), encoding='utf-8').read()
-    for k, v in (('/*FONTS*/', css), ('/*ROUGH*/', open(path('vendor', 'rough-4.6.6.js')).read()),
+    for k, v in (('/*FONTS*/', css), ('/*TOGGLE*/', open(path('pages', '_toggle.js'), encoding='utf-8').read()), ('/*ROUGH*/', open(path('vendor', 'rough-4.6.6.js')).read()),
                  ('/*DATA*/', data), ('/*RENDER*/', open(path('model.js')).read() + '\n' + open(path('render.js')).read())):
         assert k in page, k
         page = page.replace(k, v)
@@ -314,6 +317,11 @@ def preview():
     for x in model_warnings(m, src): print('warning: ' + x, file=sys.stderr)
     open(out, 'w', encoding='utf-8').write(assemble([m], preview=True))
     print(f'{out}: "{m["title"]}" in {len(styles())} styles ({", ".join(s["id"] for s in styles())})')
+
+
+def build_gallery():
+    out = sys.argv[2] if len(sys.argv) > 2 else HERE
+    sys.exit(subprocess.call(['node', path('gallery.js'), '--out', out]))
 
 
 def list_styles():
@@ -352,8 +360,41 @@ def skill_md(name='draw'):
     return src.replace('name: draw\n', f'name: {name}\n', 1)
 
 
+# The other kinds of picture the skill offers live beside diagrams/ in the repo; the skill carries their
+# reference pages under kinds/ (gallery.js reads them from either place).
+KIND_DIRS = [('statechart', ('..', 'statechart')), ('field-notes', ('..', 'explainers'))]
+
+
+# Inside the skill the kind READMEs sit at kinds/<name>/README.md, so their repo paths are rewritten on the way in.
+KIND_README_PATHS = [('python3 statechart/stamp.py', 'python3 SKILL/kinds/statechart/stamp.py'),
+                     ('`diagrams/pages/_toggle.js`', '`SKILL/pages/_toggle.js`'),
+                     ('[transit](../transit/)', 'transit (a separate explainer kit, not in this skill)'),
+                     ('[`diagrams/`](../diagrams/)', 'this skill (`SKILL/`)'),
+                     ('](../diagrams/STANDARD.md)', '](../../STANDARD.md)'),
+                     ('(`scripts/check` runs it on both example pages)', '(the source repo\'s `scripts/check` runs it)')]
+
+
+def skill_text(full, rel):
+    """The bytes a skill file carries: the source unchanged, except a kind README with its paths made true inside the skill."""
+    data = open(full, 'rb').read()
+    if not (rel.startswith('kinds/') and rel.endswith('/README.md')): return data
+    t = data.decode('utf-8')
+    for a, b in KIND_README_PATHS: t = t.replace(a, b)
+    left = re.findall(r'\]\(\.\./(?!statechart/|field-notes/|\.\./)[^)]*\)|(?<![/\w])(?:statechart|diagrams)/stamp\.py|(?<!SKILL/)diagrams/pages/', t)
+    if left: sys.exit(f'{rel}: repo paths that do not exist inside the skill: {sorted(set(left))}; add them to KIND_README_PATHS')
+    return t.encode('utf-8')
+
+
 def skill_files():
     """(source path, path inside the skill folder) for every file the skill carries besides SKILL.md."""
+    for name, rel in KIND_DIRS:
+        base = path(*rel)
+        for root, dirs, files in os.walk(base):
+            dirs[:] = sorted(d for d in dirs if not d.startswith('.') and d not in SKILL_SKIP)
+            for f in sorted(files):
+                if f.startswith('.') or f.endswith('.pyc'): continue
+                full = os.path.join(root, f)
+                yield full, f'kinds/{name}/' + os.path.relpath(full, base).replace(os.sep, '/')
     for root, dirs, files in os.walk(HERE):
         dirs[:] = sorted(d for d in dirs if not (root == HERE and d in SKILL_SKIP) and not d.startswith('.'))
         for f in sorted(files):
@@ -371,7 +412,7 @@ def build_skill():
     with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
         z.writestr('diagrams/SKILL.md', md)
         for full, rel in skill_files():
-            z.write(full, 'diagrams/' + rel); n += 1
+            z.writestr('diagrams/' + rel, skill_text(full, rel)); n += 1
     print(f'{out}: skill "diagrams", {n + 1} files, {os.path.getsize(out) // 1024} KB')
 
 
@@ -380,7 +421,8 @@ STYLES_COMMAND = ('---\ndescription: Show the six diagram looks (Clear, Sketch, 
                   'as pictures, with what each is good for, and the brand badge library.\n---\n\n'
                   'Use the `draw` skill from this plugin and follow its "Just show the styles" part: list the six looks '
                   'with `build.py styles`, show `picker.html` or `thumbs/six-looks.png` (pictures, not just names), and say '
-                  'that Clear is the default and any diagram can be asked for in another look by name.\n')
+                  'that Clear is the default and any diagram can be asked for in another look by name. For kinds, page '
+                  'layouts and mixes as pictures too, point to `/diagrams:gallery`.\n')
 
 PAGE_COMMAND = ('---\ndescription: Build a page around a diagram: pick a layout (A Scroll-along, B Plate, C Long read, '
                 'D Incident review, E Reference, F Explorer), a look and a theme (Light, Dark or Auto), or say "show me all" '
@@ -389,8 +431,19 @@ PAGE_COMMAND = ('---\ndescription: Build a page around a diagram: pick a layout 
                 '- A named combination ("Long read, Blueprint, dark"): build that page directly.\n'
                 '- "Show me all": draw the diagram once, show the six layouts on one sheet (lettered and named), let the user '
                 'pick one, show that layout in the six looks, let the user pick again, then build it.\n'
-                '- Nothing named: ask one question (explain it, argue a point, or let people look things up?), recommend a '
-                'layout, and build it in Clear with the Auto theme.\n')
+                '- Nothing named: show the pictures first (`gallery.html`, or `thumbs/gallery.png` where HTML cannot be shown) '
+                'and ask for a layout letter or a mix by its words ("Plate, Sketch"). If the user would rather you choose, '
+                'recommend a layout and build it in Clear with the Auto theme.\n')
+
+GALLERY_COMMAND = ('---\ndescription: Browse every kind of diagram (Map, Sequence, Statechart, Field Notes), page layout (A-F), '
+                   'look and mix of them as pictures, each labelled with the words to ask for it, in Light or Dark.\n'
+                   'argument-hint: "[kind | layout | look]"\n---\n\n'
+                   'Use the `draw` skill from this plugin and follow its "Pick by picture" part. The request: $ARGUMENTS\n\n'
+                   '- Show `gallery.html` (open it, present it as a file, or publish it as a private artifact); where HTML '
+                   'cannot be shown, present `thumbs/gallery.png` (or `thumbs/gallery-dark.png` on a dark surface).\n'
+                   '- If the request names a kind, layout or look, point at that section and its mixes.\n'
+                   '- Ask the user to pick by number, letter or the words under a picture ("page, Plate, Sketch"), then '
+                   'draw or build exactly that. Clear is the default look when none is picked.\n')
 
 
 def build_plugin():
@@ -409,15 +462,19 @@ def build_plugin():
     os.makedirs(os.path.join(out, 'commands'))
     with open(os.path.join(out, 'commands', 'styles.md'), 'w', encoding='utf-8', newline='\n') as f: f.write(STYLES_COMMAND)
     with open(os.path.join(out, 'commands', 'page.md'), 'w', encoding='utf-8', newline='\n') as f: f.write(PAGE_COMMAND)
+    with open(os.path.join(out, 'commands', 'gallery.md'), 'w', encoding='utf-8', newline='\n') as f: f.write(GALLERY_COMMAND)
     with open(os.path.join(skill, 'SKILL.md'), 'w', encoding='utf-8', newline='\n') as f: f.write(skill_md())
     n = 0
     for full, rel in skill_files():
         dest = os.path.join(skill, rel)
         os.makedirs(os.path.dirname(dest), exist_ok=True)
-        shutil.copy2(full, dest); n += 1
+        if rel.startswith('kinds/') and rel.endswith('/README.md'):
+            with open(dest, 'wb') as f: f.write(skill_text(full, rel))
+        else: shutil.copy2(full, dest)
+        n += 1
     print(f'{os.path.relpath(out)}: plugin "diagrams", skill "draw" with {n + 1} files')
 
 
 if __name__ == '__main__':
     cmd = sys.argv[1] if len(sys.argv) > 1 else 'page'
-    {'badges': build_badges, 'check': check, 'page': build_page, 'preview': preview, 'find': find, 'styles': list_styles, 'skill': build_skill, 'plugin': build_plugin}.get(cmd, lambda: sys.exit(__doc__))()
+    {'badges': build_badges, 'check': check, 'page': build_page, 'preview': preview, 'find': find, 'styles': list_styles, 'gallery': build_gallery, 'skill': build_skill, 'plugin': build_plugin}.get(cmd, lambda: sys.exit(__doc__))()

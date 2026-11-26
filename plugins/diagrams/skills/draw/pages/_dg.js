@@ -54,19 +54,8 @@ const DG = {
     const vb = svg.getAttribute('viewBox').split(' ').map(Number), k = svg.getBoundingClientRect().width / vb[2];
     box.scrollTo({ left: (b[0] + b[2] / 2 - vb[0]) * k - box.clientWidth / 2, top: (b[1] + b[3] / 2 - vb[1]) * k - box.clientHeight / 2, behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth' });
   },
-  // The Light / Dark / Auto toggle. It only sets data-theme on <html>; CSS swaps the twins and the page together.
-  theme() {
-    const root = document.documentElement, key = 'dg-theme:' + location.pathname;
-    try { const t = localStorage.getItem(key); if (t) root.dataset.theme = t === 'auto' ? '' : t; } catch (e) {}
-    if (!root.dataset.theme) delete root.dataset.theme;
-    const sync = () => document.querySelectorAll('.dg-theme button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === (root.dataset.theme || 'auto'))));
-    document.querySelectorAll('.dg-theme button').forEach(b => b.addEventListener('click', () => {
-      if (b.dataset.t === 'auto') delete root.dataset.theme; else root.dataset.theme = b.dataset.t;
-      try { localStorage.setItem(key, b.dataset.t); } catch (e) {}
-      sync(); document.dispatchEvent(new CustomEvent('dg-theme'));
-    }));
-    sync();
-  },
+  // The Light / Dark / Auto toggle: _toggle.js (inlined before this file) sets data-theme on <html>; CSS swaps the twins and the page together.
+  theme: () => dgToggle(),
   esc: t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]),
   // Page text: escaped, `code` in backticks, **bold**.
   md: t => DG.esc(t).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>'),

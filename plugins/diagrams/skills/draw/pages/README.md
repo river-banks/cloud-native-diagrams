@@ -20,6 +20,17 @@ node check-pages.js                                # every layout x look x theme
 
 ![Six layouts](../thumbs/page-layouts.png)
 
+## Pick by picture: the gallery
+
+`../gallery.html` shows every kind (Map, Sequence), these six layouts, the six looks and the mixes of a layout and a look as pictures, each labelled with the words to ask for it ("page, Plate, Sketch"); its filter chips show one look on every layout, or one layout in every look. `../thumbs/gallery.png` and `../thumbs/gallery-dark.png` are the same gallery as one picture. When a user names no layout, the skill shows the gallery and asks for a letter or a mix, instead of a text question.
+
+```
+node gallery.js            # redraw gallery.html and thumbs/gallery*.png from examples/incident-response.json (about a minute)
+python3 build.py gallery   # the same
+```
+
+Every picture is drawn by `gallery.js` from the example model and the kind example pages, once in light and once in dark (never a CSS invert); `check-gallery.js` (run by `scripts/check`) fails when a kind, layout or look is missing from it, when it scrolls sideways at 400 px, or when its toggle does not switch the page and every picture together.
+
 ## The page's words: `--content PAGE.json`
 
 Everything is optional; what is left out is written from the model, so a page builds from the model alone. Text takes `` `code` `` and `**bold**`; nothing else is HTML.
@@ -39,9 +50,10 @@ Everything is optional; what is left out is written from the model, so a page bu
 
 ## How the templates work
 
-- Each template is plain HTML with placeholders `page.js` fills: `<!--LANG-->`, `<!--TITLE-->`, `<!--ANSWER-->`, `<!--CRUMB-->`, `<!--META-->`, `<!--CAPTION-->`, `<!--TOGGLE-->`, `<!--FIG:name-->` (one drawing; a page can have several), `/*FONTS*/`, `/*DGCSS*/` (`_dg.css`) and `/*DGJS*/` (`PAGE`, `MODEL` and `_dg.js`). The template's colours are two blocks, `@theme light {...}` and `@theme dark {...}`, which `page.js` writes out for Auto (`prefers-color-scheme`) and for the toggle (`data-theme` on `<html>`).
+- Each template is plain HTML with placeholders `page.js` fills: `<!--LANG-->`, `<!--TITLE-->`, `<!--ANSWER-->`, `<!--CRUMB-->`, `<!--META-->`, `<!--CAPTION-->`, `<!--TOGGLE-->`, `<!--FIG:name-->` (one drawing; a page can have several), `/*FONTS*/`, `/*DGCSS*/` (`_dg.css`) and `/*DGJS*/` (`PAGE`, `MODEL`, `_toggle.js` and `_dg.js`). The template's colours are two blocks, `@theme light {...}` and `@theme dark {...}`, which `page.js` writes out for Auto (`prefers-color-scheme`) and for the toggle (`data-theme` on `<html>`).
 - A `.dg` box holds the two twins as its only `<svg>` children (`.dg > svg.dg-l`, `.dg > svg.dg-d`). CSS shows one; a theme change never redraws. Badges are `<g>` inside their `.node`, so `.dg > svg` never hits a badge and dimming a box dims its logo.
 - Focus never costs the words: a box or label that is not lit fades its shapes, and its text takes the twin's ink (`--dg-ink`, which `page.js` sets on each twin), and a line label keeps its plate, so its words keep 4.5:1 on what is under them. Layout A is complete at rest: the whole drawing shows at load and whenever no step card is in the reading band.
-- `_dg.js` gives every template `DG.light` (focus on edges, flows or boxes), `DG.crop` / `DG.uncrop` (cut to some boxes at full size), `DG.reveal` (scroll a box into view), `DG.adopt` (moves badges into their box in drawings from before plugin 1.7.0) and the toggle.
+- `_dg.js` gives every template `DG.light` (focus on edges, flows or boxes), `DG.crop` / `DG.uncrop` (cut to some boxes at full size), `DG.reveal` (scroll a box into view), `DG.adopt` (moves badges into their box in drawings from before plugin 1.7.0) and the toggle (`DG.theme`, which calls `dgToggle` from `_toggle.js`).
+- `_toggle.js` is the one Light / Dark / Auto toggle: `page.js` inlines it before `_dg.js`, `build.py` into the style picker and preview and `gallery.js` into the gallery. It sets `data-theme` on `<html>` (none is Auto), remembers the choice per page in `localStorage` (guarded, so a blocked store still works) and fires a `dg-theme` event; the page's CSS switches the page and every drawing together.
 - Size: `.dg` is never narrower than 85% of its drawn width (`--dg-min`); a wider drawing scrolls or pans. Only the locator in D (marked `data-locator`) and F's "Whole map" (the reader's choice) show it smaller.
 - Fonts: at most two families per page. The drawing's faces come first (IBM Plex Sans for Clear); the layout's own face is added only when there is room. Accents stay outside hues 150-260 and 15-40 in both themes.

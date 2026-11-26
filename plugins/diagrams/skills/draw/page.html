@@ -12,9 +12,14 @@
 :root[data-theme="dark"] { --paper: #141414; --floor: #1d1d1d; --ink: #f2f2f2; --muted: #a8a8a8; --line: #353535; color-scheme: dark; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 'Overpass', system-ui, sans-serif; }
-.band { background: #000; color: #fff; padding-block: 14px; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); display: flex; gap: 14px; align-items: center; }
+.band { background: #000; color: #fff; padding-block: 14px; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
 .band b { background: var(--accent); color: #111; font-weight: 800; padding: 2px 8px; }
 .band span { font-weight: 800; letter-spacing: .02em; }
+.dg-theme { margin-left: auto; display: inline-flex; border: 1px solid #6b6b6b; border-radius: 6px; overflow: hidden; font: 700 13px/1 'Overpass', system-ui, sans-serif; }
+.dg-theme button { all: unset; cursor: pointer; padding: 7px 10px; color: #c9c9c9; }
+.dg-theme button + button { border-left: 1px solid #6b6b6b; }
+.dg-theme button[aria-pressed="true"] { color: #fff; box-shadow: inset 0 -3px 0 var(--accent); }
+.dg-theme button:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
 main { max-width: 1480px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
 h1 { font-size: clamp(30px, 4vw, 48px); line-height: 1.05; margin: 0 0 10px; font-weight: 800; letter-spacing: -.01em; }
 h2 { font-size: 26px; margin: 48px 0 6px; font-weight: 800; }
@@ -53,13 +58,13 @@ p.lede { max-width: 760px; color: var(--muted); margin: 0 0 24px; font-size: 18p
 @media (max-width: 900px) { .card { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 520px) { main { padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); } .grid { grid-template-columns: 1fr; } .chips input { min-width: 0; width: 100%; } }
 </style>
-<header class="band"><b>Diagrams</b><span>Technical diagrams</span></header>
+<header class="band"><b>Diagrams</b><span>Technical diagrams</span><div class="dg-theme" role="group" aria-label="Theme: the page and every drawing"><button type="button" data-t="light">Light</button><button type="button" data-t="dark">Dark</button><button type="button" data-t="auto">Auto</button></div></header>
 <main>
   <h1>Pick a diagram style</h1>
   <p class="lede" id="lede">One model, every style in the catalogue. Every product carries its real logo as a badge, from the shared badge library further down. Pick the look that fits the job, then ask for it by name.</p>
   <div class="tabs" id="examples" role="group" aria-label="Example diagram" hidden></div>
   <div class="tabs" id="tabs" role="group" aria-label="Diagram style"></div>
-  <div class="chips"><span id="theme" role="group" aria-label="Diagram background" style="display:contents"><button type="button" data-t="light">Light</button><button type="button" data-t="dark">Dark</button></span><span id="views" role="group" aria-label="View" style="display:contents"><button type="button" data-v="map">Map</button><button type="button" data-v="sequence">Sequence</button></span></div>
+  <div class="chips"><span id="views" role="group" aria-label="View" style="display:contents"><button type="button" data-v="map">Map</button><button type="button" data-v="sequence">Sequence</button></span></div>
   <figure class="stage" style="margin:0" aria-label="Diagram"><svg id="main" role="img" aria-label="Diagram"></svg></figure>
   <div class="chips" id="save" role="group" aria-label="Download this style"><button type="button" id="dl-svg">Download SVG</button><button type="button" id="dl-png">Download PNG</button></div>
   <section class="card" id="card" aria-live="polite"></section>
@@ -78,6 +83,7 @@ p.lede { max-width: 760px; color: var(--muted); margin: 0 0 24px; font-size: 18p
   <p class="notes">To add a style, an example or a badge, see <code>diagrams/README.md</code> in the cloud-native-diagrams repo: one JSON file or one line, then <code>python3 build.py</code>.</p>
   <p class="notes">Badges: AWS Architecture Icons from the AWS asset package (AWS lets you use them in architecture diagrams). Other logos: Simple Icons glyph data (CC0); each logo is still its owner's trademark, so use it only to name the product. Fonts: Excalifont (OFL), IBM Plex, Archivo, Overpass, Hanken Grotesk, JetBrains Mono (OFL).</p>
 </main>
+<script>/*TOGGLE*/</script>
 <script>/*ROUGH*/</script>
 <script>/*DATA*/</script>
 <script>/*RENDER*/</script>
@@ -87,7 +93,9 @@ const qs = new URLSearchParams(location.search);
 let cur = STYLES.find(s => s.id === qs.get('style')) || STYLES[0];
 let MODEL = EXAMPLES.find(m => m.id === qs.get('example')) || EXAMPLES[0];
 let mode = cur.node.badge;
-let theme = qs.get('theme') === 'dark' ? 'dark' : 'light';
+// The Light / Dark / Auto toggle switches the whole page and every drawing on it. ?theme= (export.js, page.js) pins it.
+dgToggle({ fixed: ['light', 'dark', 'auto'].includes(qs.get('theme')) ? qs.get('theme') : null });
+let theme = dgTheme();
 let view = qs.get('view') === 'sequence' ? 'sequence' : 'map';
 const hasSteps = m => (m.edges || []).some(e => e.step);
 const noHeader = qs.get('header') === '0';   // export.js --no-header: the page around the diagram owns the title
@@ -120,7 +128,6 @@ function pick(id) {
   exTabs.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.id === MODEL.id));
   const svg = document.getElementById('main');
   drawDiagram(svg, shown(), themeStyle(cur, theme), B);
-  document.querySelectorAll('#theme button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === theme));
   document.querySelectorAll('#views button').forEach(b => { b.hidden = !hasSteps(MODEL); b.setAttribute('aria-pressed', b.dataset.v === (hasSteps(MODEL) ? view : 'map')); });
   document.getElementById('card').innerHTML = `
     <div><h3>${cur.name}</h3><p class="after">After ${cur.after}</p><p style="margin:0">${cur.blurb}</p></div>
@@ -190,7 +197,7 @@ document.getElementById('dl-png').onclick = () => {
 };
 function thumbs() { document.querySelectorAll('#grid .thumb > svg').forEach((svg, i) => drawDiagram(svg, shown(), themeStyle(STYLES[i], theme), B)); }
 document.querySelectorAll('#views button').forEach(b => b.onclick = () => { view = b.dataset.v; pick(cur.id); thumbs(); });
-document.querySelectorAll('#theme button').forEach(b => b.onclick = () => { theme = b.dataset.t; pick(cur.id); thumbs(); });
+document.addEventListener('dg-theme', () => { theme = dgTheme(); pick(cur.id); thumbs(); });
 document.fonts.ready.then(() => { pick(cur.id); thumbs(); });
 pick(cur.id); thumbs();
 </script>

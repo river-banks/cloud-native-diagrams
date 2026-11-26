@@ -7,4 +7,4 @@ Use the `draw` skill from this plugin and follow its "Put a diagram on a page" p
 
 - A named combination ("Long read, Blueprint, dark"): build that page directly.
 - "Show me all": draw the diagram once, show the six layouts on one sheet (lettered and named), let the user pick one, show that layout in the six looks, let the user pick again, then build it.
-- Nothing named: ask one question (explain it, argue a point, or let people look things up?), recommend a layout, and build it in Clear with the Auto theme.
+- Nothing named: show the pictures first (`gallery.html`, or `thumbs/gallery.png` where HTML cannot be shown) and ask for a layout letter or a mix by its words ("Plate, Sketch"). If the user would rather you choose, recommend a layout and build it in Clear with the Auto theme.

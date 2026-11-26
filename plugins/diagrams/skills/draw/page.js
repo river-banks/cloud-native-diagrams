@@ -204,7 +204,7 @@ function build(layout, tw, M, given, theme, faces) {
   const ground = { light: tw.light.bg, dark: tw.dark.bg };
   t = t.replace(/@theme light \{([^}]*)\}/, (m, v) => `:root{${v.trim()} --dg-ground:${ground.light}; ${F.vars} color-scheme:light}`)
     .replace(/@theme dark \{([^}]*)\}/, (m, v) => `@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){${v.trim()} --dg-ground:${ground.dark}; color-scheme:dark}}\n:root[data-theme="dark"]{${v.trim()} --dg-ground:${ground.dark}; color-scheme:dark}`);
-  const css = fs.readFileSync(path.join(dir, '_dg.css'), 'utf8'), js = fs.readFileSync(path.join(dir, '_dg.js'), 'utf8');
+  const css = fs.readFileSync(path.join(dir, '_dg.css'), 'utf8'), js = fs.readFileSync(path.join(dir, '_toggle.js'), 'utf8') + '\n' + fs.readFileSync(path.join(dir, '_dg.js'), 'utf8');
   const toggle = '<div class="dg-theme" role="group" aria-label="Theme"><button type="button" data-t="light">Light</button><button type="button" data-t="dark">Dark</button><button type="button" data-t="auto">Auto</button></div>';
   const json = o => JSON.stringify(o).replace(/</g, '\\u003c');
   const rep = {

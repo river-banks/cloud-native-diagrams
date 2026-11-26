@@ -42,6 +42,8 @@ node check-pages.js                               # every layout in every look a
 
 ## Picker page
 
+Open [`gallery.html`](gallery.html) to pick by picture: every kind (Map, Sequence), page layout, look and mix of them, each labelled with the words to ask for it, in Light or Dark (`node gallery.js` redraws it and `thumbs/gallery.png`, `gallery-dark.png` from the examples; see [pages/README.md](pages/README.md)).
+
 Open [`picker.html`](picker.html) in a browser to compare every style on every example, and to browse the badge library. It is a single file with fonts and data built in, so it also works offline or published as an Artifact.
 
 ```
@@ -66,6 +68,10 @@ diagrams/
   build.py                build and lint; also styles, find and preview for the plugin
   check.js                renders every style x every example and fails on problems; --thumbs rewrites thumbs/
   export.js               saves one model in one style as SVG and PNG, or as Mermaid or draw.io (--no-header for a page)
+  gallery.js              draws gallery.html and thumbs/gallery*.png: kinds, layouts, looks and mixes, light and dark
+  gallery.html            built gallery, committed
+  check-gallery.js        opens the gallery at 1280 and 400 px, light and dark, and fails on the gallery rules
+  pages/_toggle.js        the one Light / Dark / Auto toggle (pages, picker, preview, gallery)
   page.js                 builds the page around a diagram: layout x look x theme, and the show-all contact sheets
   pages/                  the six page templates (A-F) and their shared _dg.css and _dg.js
   check-pages.js          loads every template in every look and theme and fails on the page rules
@@ -165,7 +171,7 @@ If the look needs something the renderer cannot do yet (a new zone or title trea
 
 ### Dark versions
 
-Every style has a dark version from its `dark` block. The picker has Light and Dark buttons (or `?theme=dark`), its downloads are named `-dark`, and `node export.js MODEL.json STYLE OUT --theme dark` saves it. `check.js` renders every style both ways and runs the contrast checks on both.
+Every style has a dark version from its `dark` block. The picker and preview have a Light / Dark / Auto toggle that switches the whole page with every drawing (or `?theme=dark`), their downloads are named `-dark`, and `node export.js MODEL.json STYLE OUT --theme dark` saves it (`--theme both` writes `OUT.svg`/`.png` and `OUT-dark.svg`/`.png` in one run). `check.js` renders every style both ways and runs the contrast checks on both.
 
 ## Places inside places: nested zones
 
